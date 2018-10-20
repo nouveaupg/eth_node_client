@@ -1,0 +1,5 @@
+{"ipc_address":"/home/ethereum/.ethereum/geth.ipc",
+"max_rpc_tries":5,
+"polling_interval":300,
+"account":"0x58066fc55783551223aaf65588ca5049283a7de2"}
+
