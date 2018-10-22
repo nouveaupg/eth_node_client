@@ -37,16 +37,8 @@ class RPCInterface:
         data = {"method": "eth_syncing", "params": []}
         return self.process_request(data)
 
-    def get_block_number(self):
-        data = {"method": "eth_blockNumber", "params": []}
-        return self.process_request(data)
-
     def get_balance(self, eth_address):
         data = {"method": "eth_getBalance", "params": [eth_address, "latest"]}
-        return self.process_request(data)
-
-    def get_peer_count(self):
-        data = {"method": "net_peerCount", "params": []}
         return self.process_request(data)
 
     def eth_gas_price(self):
@@ -63,6 +55,11 @@ class RPCInterface:
 
     def get_latest_block(self):
         data = {"method": "eth_getBlockByNumber", params: ["latest", False]}
+        return self.process_request(data)
+
+    def get_peers(self):
+        data = {"method": "admin_peers", "params": []}
+        return self.process_request(data)
 
     def eth_send_transaction(self, _from, data, to=None, gas=None, gas_price=None, value=None):
         params = {"from": _from, "data": data}

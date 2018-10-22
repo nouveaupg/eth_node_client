@@ -13,6 +13,11 @@ class ERC20Contract:
         self.token_symbol = symbol
         self.initial_supply = initial_supply
         self.contract_address = contract_address
+        # TODO: verify this
+        if self.contract_address:
+            self.published = True
+        else:
+            self.published = False
 
     def create_smart_contract(self):
         encoded_data = encode_abi(('uint256', 'string', 'string'),(self.initial_supply, self.token_name, self.token_symbol))
