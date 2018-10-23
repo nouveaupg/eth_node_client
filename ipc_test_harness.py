@@ -12,11 +12,23 @@ class IPCTestHarness(ipc_socket.GethInterface):
         request_data = json.loads(self.request_data)
         if type(request_data) == dict:
             if request_data["method"] == "admin_nodeInfo":
-                return json.load(open("geth_test_responses/admin_nodeInfo", "r"))
+                response_stream = open("geth_test_responses/admin_nodeInfo.json", "r")
+                response_data = json.load(response_stream)
+                response_stream.close()
+                response_data["id"] = request_data["id"]
+                return response_data
             elif request_data["method"] == "admin_peers":
-                return json.load(open("geth_test_responses/admin_peers", "r"))
+                response_stream = open("geth_test_responses/admin_peers.json", "r")
+                response_data = json.load(response_stream)
+                response_stream.close()
+                response_data["id"] = request_data["id"]
+                return response_data
             elif request_data["method"] == "eth_gasPrice":
-                return json.load(open("geth_test_responses/eth_gasPrice.json", "r"))
+                response_stream = open("geth_test_responses/eth_gasPrice.json", "r")
+                response_data = json.load(response_stream)
+                response_stream.close()
+                response_data["id"] = request_data["id"]
+                return response_data
             elif request_data["method"] == "eth_getBlockByNumber":
                 if "params" in request_data:
                     args = request_data["params"]
@@ -29,14 +41,25 @@ class IPCTestHarness(ipc_socket.GethInterface):
                             raise TypeError("Expected bool for second param")
                         if ars[1] is not False:
                             raise ValueError("Second argument should only by False")
-                        return json.load(open("geth_test_responses/eth_getBlockByNumber.json", "r"))
+                        response_stream = open("geth_test_responses/eth_getBlockByNumber.json", "r")
+                        response_data = json.load(response_stream)
+                        response_data["id"] = request_data["id"]
+                        return response_data
                     else:
                         raise TypeError("Expected params list in request")
             elif request_data["method"] == "eth_syncing":
                 if NODE_SYNCED:
-                    return json.load(open("geth_syncing.json", "r"))
+                    response_stream = open("geth_test_responses/eth_syncing.json", "r")
+                    response_data = json.load(response_stream)
+                    response_stream.close()
+                    response_data["id"] = request_data["id"]
+                    return response_data
                 else:
-                    return json.load(open("geth_not_syncing.json", "r"))
+                    response_stream = open("geth_test_responses/eth_not_syncing.json", "r")
+                    response_data = json.load(response_stream)
+                    response_stream.close()
+                    response_data["id"] = request_data["id"]
+                    return response_data
             elif request_data["method"] == "eth_getBalance":
                 args = request_data["params"]
                 if type(args) is list:
@@ -44,11 +67,15 @@ class IPCTestHarness(ipc_socket.GethInterface):
                         raise TypeError("Expected string for first param")
                     if type(args[1]) is not str:
                         raise TypeError("Expected string for second param")
-                    if args[1] is not 'latest':
+                    if args[1] != 'latest':
                         raise ValueError("Second argument should only be 'latest'")
                 else:
                     raise TypeError("Expected parameter list in request data")
-                return json.load(open("eth_getBalance.json", "r"))
+                response_stream = open("geth_test_responses/eth_getBalance.json", "r")
+                response_data = json.load(response_stream)
+                response_stream.close()
+                response_data["id"] = request_data["id"]
+                return response_data
             else:
                 raise ValueError("Unsupported method")
         else:

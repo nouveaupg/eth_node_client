@@ -8,7 +8,9 @@ class GethInterface:
             self.request_data = json.dumps(request_data)
         else:
             self.request_data = request_data
-        self.config = json.load(open("config.json", "r"))
+        config_file = open("config.json", "r")
+        self.config = json.load(config_file)
+        config_file.close()
 
     def setup_socket(self):
         new_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

@@ -23,8 +23,8 @@ class RPCInterface:
             ctr = 0
             for each in self.outstanding_requests:
                 if each["request_id"] == data["id"]:
-                    output["request_obj"] = each["request_obj"].deepcopy()
-                    output["elapsed"] = each["sent"] - time.time()
+                    output["request_obj"] = each.copy()
+                    output["delay"] = time.time() - each["sent"]
                     break
                 ctr += 1
             if ctr < len(self.outstanding_requests):

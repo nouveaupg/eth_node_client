@@ -6,17 +6,23 @@ import rpc_interface
 import sqlite3
 import json
 import util
+import unittest
 
 
 class NodeInfo:
     def __init__(self, logger):
-        self.config = json.read(open("config.json", "r"))
+        config_file = open("config.json", "r")
+        self.config = json.load(config_file)
+        config_file.close()
         self.logger = logger
         # initalize memory db
         self.db = sqlite3.connect(":memory:")
         schema_file = open("sqlite_mem_table_schema.sql")
         schema = schema_file.read()
+        schema_file.close()
         self.db.execute(schema)
+
+        # TODO: peer db
 
         self.rpc_interface = rpc_interface.RPCInterface()
         self.enode = None
@@ -27,11 +33,15 @@ class NodeInfo:
         self.total_rpc_calls = 0
         self.total_rpc_delay = 0
         self.gas_price = None
+        self.synced = False
+        self.blocks_behind = 0
+        self.balance = 0
 
     def _admin_node_info(self):
         request_data = self.rpc_interface.get_node_info()
         ipc = ipc_test_harness.IPCTestHarness(request_data)
-        response_data = ipc.send()
+        response_stream = ipc.send()
+        response_data = self.rpc_interface.process_response(response_stream)
 
         if type(response_data) == dict:
             self.total_rpc_delay += response_data["delay"]
@@ -41,9 +51,17 @@ class NodeInfo:
                 self.enode = result_data["enode"]
                 self.name = result_data["name"]
                 self.eth_node_id = result_data["id"]
-                self.logger.info("Successful admin_nodeInfo IPC call: " + response_data["delay"] + " seconds")
+                message = "Successful admin_nodeInfo IPC call: " + str(response_data["delay"]) + " seconds"
+                if self.logger:
+                    self.logger.info(message)
+                else:
+                    print(message)
                 return True
-        self.logger.error("admin_nodeInfo API call failed.")
+        message = "admin_nodeInfo API call failed."
+        if self.logger:
+            self.logger.error(message)
+        else:
+            print(message)
         return False
 
     def _admin_peers(self):
@@ -65,7 +83,8 @@ class NodeInfo:
     def _eth_gasPrice(self):
         request_data = self.rpc_interface.eth_gas_price()
         ipc = ipc_test_harness.IPCTestHarness(request_data)
-        response_data = ipc.send()
+        response_stream = ipc.send()
+        response_data = self.rpc_interface.process_response(response_stream)
 
         if type(response_data) == dict:
             self.total_rpc_delay += response_data["delay"]
@@ -73,20 +92,31 @@ class NodeInfo:
             if "result" in response_data:
                 gas_price = util.hex_to_dec(response_data["result"])
                 self.gas_price = util.wei_to_ether(gas_price)
-                self.logger.info("Successful eth_gasPrice IPC call: " + response_data["delay"] + " seconds")
-        self.logger.error("eth_gasPrice IPC call failed.")
+                message = "Successful eth_gasPrice IPC call: " + str(response_data["delay"]) + " seconds"
+                if self.logger:
+                    self.logger.info(message)
+                else:
+                    print(message)
+                return True
+        message = "eth_gasPrice IPC call failed."
+        if self.logger:
+            self.logger.error(message)
+        else:
+            print(message)
         return False
 
     def _getLatestBlock(self):
         request_data = self.rpc_interface.get_latest_block()
         ipc = ipc_test_harness.IPCTestHarness(request_data)
-        response_data = ipc.send()
+        response_stream = ipc.send()
+        response_data = self.rpc_interface.process_response(response_stream)
 
         if type(response_data) == dict:
             self.total_rpc_delay += response_data["delay"]
             self.total_rpc_calls += 1
             if "result" in response_data:
                 result_data = response_data["result"]
+
                 # TODO: feed into memory database
                 self.logger.info("Successful getBlockByNumber IPC call: " + response_data["delay"] + " seconds")
                 return True
@@ -96,24 +126,77 @@ class NodeInfo:
     def _getBalance(self):
         request_data = self.rpc_interface.get_balance(self.config["account"])
         ipc = ipc_test_harness.IPCTestHarness(request_data)
-        response_data = ipc.send()
+        response_stream = ipc.send()
+        response_data = self.rpc_interface.process_response(response_stream)
 
         if type(response_data) == dict:
             self.total_rpc_delay == response_data["delay"]
             self.total_rpc_calls += 1
             if "result" in response_data:
-                self.logger.info("Successful eth_getBalance IPC call: " + response_data["delay"] + " seconds")
+                message = "Successful eth_getBalance IPC call: " + str(response_data["delay"]) + " seconds"
+                if self.logger:
+                    self.logger.info(message)
+                else:
+                    print(message)
+                self.balance = util.wei_to_ether(util.hex_to_dec(response_data["result"]))
                 return True
-        self.logger.error("eth_getBalance API call failed.")
+        message = "eth_getBalance API call failed."
+        if self.logger:
+            self.logger.error(message)
+        else:
+            print(message)
         return False
 
-    def _eth_syncinging(self):
+    def _eth_syncing(self):
         request_data = self.rpc_interface.check_sync()
         ipc = ipc_test_harness.IPCTestHarness(request_data)
-        response_data = ipc.send()
+        response_stream = ipc.send()
+        response_data = self.rpc_interface.process_response(response_stream)
 
         if type(response_data) == dict:
             self.total_rpc_delay += response_data["delay"]
             self.total_rpc_calls += 1
             if "result" in response_data:
-                self.logger.info("Successful eth_syncing API call: " + response_data["delay"] + " seconds")
+                syncing = response_data["result"]
+                if type(syncing) == dict:
+                    highest_block = util.hex_to_dec(syncing["highestBlock"])
+                    current_block = util.hex_to_dec(syncing["currentBlock"])
+                    self.synced = False
+                    self.blocks_behind = highest_block - current_block
+                else:
+                    self.synced = True
+                    self.blocks_behind = 0
+                message = "Successful eth_syncing API call: " + str(response_data["delay"]) + " seconds"
+                if self.logger:
+                    self.logger.info(message)
+                else:
+                    print(message)
+                return True
+        else:
+            message = "eth_syncing API called failed."
+            if self.logger:
+                self.logger.error(message)
+            else:
+                print(message)
+            return False
+
+
+class NodeInfoUnitTests(unittest.TestCase):
+    def test_admin_nodeInfo(self):
+        node_info = NodeInfo(logger=None)
+        self.assertTrue(node_info._admin_node_info())
+
+    def test_eth_syncing(self):
+        node_info = NodeInfo(logger=None)
+        self.assertTrue(node_info._eth_syncing())
+
+    def test_eth_getBalance(self):
+        node_info = NodeInfo(logger=None)
+        self.assertTrue(node_info._getBalance())
+
+    def test_eth_gasPrice(self):
+        node_info = NodeInfo(logger=None)
+        self.assertTrue(node_info._eth_gasPrice())
+
+if __name__ == "__main__":
+    unittest.main()
