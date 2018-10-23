@@ -4,8 +4,10 @@
 import json
 import socket
 
+
 def wei_to_ether(wei):
     return 1.0 * wei / 10**18
+
 
 data = {"jsonrpc":"2.0","method":"eth_gasPrice","params":[],"id":1}
 
@@ -15,14 +17,15 @@ def setup_socket():
     new_socket.settimeout(2)
     return new_socket
 
+
 _socket = setup_socket()
-_socket.sendall(json.dumps(data))
+_socket.sendall(json.dumps(data).encode())
 response_raw = ""
 
 for _ in range(3):
     while True:
         try:
-            response_raw += _socket.recv(4096)
+            response_raw += _socket.recv(4096).decode()
         except socket.timeout:
             break
     if response_raw == "":
@@ -33,4 +36,4 @@ for _ in range(3):
 response = json.loads(response_raw)
 result = wei_to_ether(int(response['result'],16))
 # probably better to keep in scientific/engineering notation
-print "Gas Price: " + str(result) + " ETH"
+print("Gas Price: " + str(result) + " ETH")
