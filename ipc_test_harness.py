@@ -35,11 +35,11 @@ class IPCTestHarness(ipc_socket.GethInterface):
                     if type(args) is list:
                         if type(args[0]) is not str:
                             raise TypeError("Expected string for first param")
-                        if args[0] is not "latest":
+                        if args[0] != "latest":
                             raise ValueError("First argument should only be 'latest'")
                         if type(args[1]) is not bool:
                             raise TypeError("Expected bool for second param")
-                        if ars[1] is not False:
+                        if args[1] is not False:
                             raise ValueError("Second argument should only by False")
                         response_stream = open("geth_test_responses/eth_getBlockByNumber.json", "r")
                         response_data = json.load(response_stream)

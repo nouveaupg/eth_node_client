@@ -50,11 +50,11 @@ class RPCInterface:
         return self.process_request(data)
 
     def get_transaction_receipt(self, hash):
-        data = {"method": "eth_getTransactionReceipt", params: [hash]}
+        data = {"method": "eth_getTransactionReceipt", "params": [hash]}
         return self.process_request(data)
 
     def get_latest_block(self):
-        data = {"method": "eth_getBlockByNumber", params: ["latest", False]}
+        data = {"method": "eth_getBlockByNumber", "params": ["latest", False]}
         return self.process_request(data)
 
     def get_peers(self):

@@ -3,7 +3,6 @@
 import ipc_socket
 import ipc_test_harness
 import rpc_interface
-import sqlite3
 import json
 import util
 import unittest
@@ -15,14 +14,8 @@ class NodeInfo:
         self.config = json.load(config_file)
         config_file.close()
         self.logger = logger
-        # initalize memory db
-        self.db = sqlite3.connect(":memory:")
-        schema_file = open("sqlite_mem_table_schema.sql")
-        schema = schema_file.read()
-        schema_file.close()
-        self.db.execute(schema)
 
-        # TODO: peer db
+        # TODO: persistent peer db
 
         self.rpc_interface = rpc_interface.RPCInterface()
         self.enode = None
@@ -36,6 +29,8 @@ class NodeInfo:
         self.synced = False
         self.blocks_behind = 0
         self.balance = 0
+        self.peers = []
+        self.latest_block = None
 
     def _admin_node_info(self):
         request_data = self.rpc_interface.get_node_info()
@@ -67,17 +62,33 @@ class NodeInfo:
     def _admin_peers(self):
         request_data = self.rpc_interface.get_peers()
         ipc = ipc_test_harness.IPCTestHarness(request_data)
-        response_data = ipc.send()
+        response_stream = ipc.send()
+        response_data = self.rpc_interface.process_response(response_stream)
 
         if type(response_data) == dict:
             self.total_rpc_delay += response_data["delay"]
             self.total_rpc_calls += 1
-            if result in response_data:
+            if "result" in response_data:
                 result_data = response_data["result"]
-                # TODO: feed into peer database
-                self.logger.info("Successful admin_Peers IPC call: " + response_data["delay"] + " seconds")
+                self.peers = []
+                for each in result_data:
+                    self.peers.append(dict(enode=each["enode"],
+                                           caps=each["caps"],
+                                           id=each["id"],
+                                           network=each["network"]))
+                # TODO: feed into persistent peer database
+                message = "Successful admin_Peers IPC call: " + str(response_data["delay"]) + " seconds"
+                message += "\n" + str(len(self.peers)) + " peers"
+                if self.logger:
+                    self.logger.info(message)
+                else:
+                    print(message)
                 return True
-        self.logger.error("admin_peers IPC call failed.")
+        message = "admin_peers IPC call failed."
+        if self.logger:
+            self.logger.error(message)
+        else:
+            print(message)
         return False
 
     def _eth_gasPrice(self):
@@ -116,11 +127,23 @@ class NodeInfo:
             self.total_rpc_calls += 1
             if "result" in response_data:
                 result_data = response_data["result"]
-
-                # TODO: feed into memory database
-                self.logger.info("Successful getBlockByNumber IPC call: " + response_data["delay"] + " seconds")
+                self.latest_block = {'gas_limit': util.hex_to_dec(result_data["gasLimit"]),
+                                     'gas_used': util.hex_to_dec(result_data["gasUsed"]), 'hash': result_data["hash"],
+                                     'number': util.hex_to_dec(result_data["number"]),
+                                     'size': util.hex_to_dec(result_data["size"]),
+                                     'timestamp': util.hex_to_dec(result_data["timestamp"]),
+                                     'transaction_count': len(result_data["transactions"])}
+                message = "Successful getBlockByNumber IPC call: " + str(response_data["delay"]) + " seconds"
+                if self.logger:
+                    self.logger.info(message)
+                else:
+                    print(message)
                 return True
-        self.logger.error("getBlockByNumber API call failed.")
+        message = "getBlockByNumber API call failed."
+        if self.logger:
+            self.logger.error(message)
+        else:
+            print(message)
         return False
 
     def _getBalance(self):
@@ -197,6 +220,15 @@ class NodeInfoUnitTests(unittest.TestCase):
     def test_eth_gasPrice(self):
         node_info = NodeInfo(logger=None)
         self.assertTrue(node_info._eth_gasPrice())
+
+    def test_admin_peers(self):
+        node_info = NodeInfo(logger=None)
+        self.assertTrue(node_info._admin_peers())
+
+    def test_latest_block(self):
+        node_info = NodeInfo(logger=None)
+        self.assertTrue(node_info._getLatestBlock())
+
 
 if __name__ == "__main__":
     unittest.main()
