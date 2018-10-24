@@ -20,12 +20,12 @@ class GethInterface:
 
     def send(self):
         _socket = self.setup_socket()
-        _socket.sendall(self.request_data)
+        _socket.sendall(self.request_data.encode())
         response_raw = ""
         for _ in range(self.config['max_rpc_tries']):
             while True:
                 try:
-                    response_raw += _socket.recv(4096)
+                    response_raw += _socket.recv(4096).decode()
                 except socket.timeout:
                     break
             if response_raw == "":
