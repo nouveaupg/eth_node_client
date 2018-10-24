@@ -31,6 +31,8 @@ class NodeInfo:
         self.balance = 0
         self.peers = []
         self.latest_block = None
+        self._admin_node_info()
+        self.update()
 
     def _admin_node_info(self):
         request_data = self.rpc_interface.get_node_info()
@@ -202,6 +204,14 @@ class NodeInfo:
             else:
                 print(message)
             return False
+
+    def update(self):
+        result = self._eth_syncing()
+        if result and self.synced:
+            self._eth_gasPrice()
+            self._admin_peers()
+            self._getLatestBlock()
+            self._getBalance()
 
 
 class NodeInfoUnitTests(unittest.TestCase):

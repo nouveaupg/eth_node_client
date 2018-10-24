@@ -3,7 +3,7 @@ import json
 import ipc_socket
 
 
-NODE_SYNCED = True
+NODE_SYNCED = False
 
 
 class IPCTestHarness(ipc_socket.GethInterface):
@@ -43,6 +43,7 @@ class IPCTestHarness(ipc_socket.GethInterface):
                             raise ValueError("Second argument should only by False")
                         response_stream = open("geth_test_responses/eth_getBlockByNumber.json", "r")
                         response_data = json.load(response_stream)
+                        response_stream.close()
                         response_data["id"] = request_data["id"]
                         return response_data
                     else:
