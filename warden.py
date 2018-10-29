@@ -1,6 +1,7 @@
 import node_information
 import logging
 import urllib
+from urllib.request import Request,urlopen
 import json
 import time
 
@@ -41,9 +42,10 @@ if __name__ == '__main__':
             output_dict["blocks_behind"] = node_monitor.blocks_behind
 
         data = json.dumps(output_dict).encode('utf8')
-        req = urllib.request.Request(config_data["api_endpoint"] + config_data["api_key"], data=data,
-                                     headers={'content-type': 'application/json'})
-        response = urllib.request.urlopen(req)
+        req = Request(config_data["api_endpoint"] + config_data["api_key"],
+                      data=data,
+                      headers={'content-type': 'application/json'})
+        response = urlopen(req)
         if response.getcode() == 200:
             logger.info("Node information updated successfully.")
         else:
