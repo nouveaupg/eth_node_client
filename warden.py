@@ -25,19 +25,19 @@ if __name__ == '__main__':
     config_stream.close()
 
     logger.info("Warden configuration loaded: {0} second polling interval.".format(config_data["polling_interval"]))
-    node_information.NodeInfo(logger)
+    node_monitor = node_information.NodeInfo(logger)
 
     while 1:
-        output_dict = dict(peers=node_information.peers,
-                           synchronized=node_information.synced,
-                           latest_gas_price=node_information.gas_price,
-                           name=node_information.name,
-                           enode=node_information.enode,
-                           latest_block=node_information.latest_block)
+        output_dict = dict(peers=node_monitor.peers,
+                           synchronized=node_monitor.synced,
+                           latest_gas_price=node_monitor.gas_price,
+                           name=node_monitor.name,
+                           enode=node_monitor.enode,
+                           latest_block=node_monitor.latest_block)
         if output_dict["synchronized"]:
             output_dict["blocks_behind"] = 0
         else:
-            output_dict["blocks_behind"] = node_information.blocks_behind
+            output_dict["blocks_behind"] = node_monitor.blocks_behind
 
         data = json.dumps(output_dict).encode('utf8')
         req = urllib.request.Request(config_data["api_endpoint"] + config_data["api_key"], data=data,
@@ -49,5 +49,5 @@ if __name__ == '__main__':
             logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
         # delay for 5 minutes
         time.sleep(config_data["polling_interval"])
-        node_information.update()
+        node_monitor.update()
 

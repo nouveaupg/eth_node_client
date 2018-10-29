@@ -79,7 +79,7 @@ class NodeInfo:
                                            network=each["network"]))
                 # TODO: feed into persistent peer database
                 message = "Successful admin_Peers IPC call: " + str(response_data["delay"]) + " seconds"
-                message += "\n" + str(len(self.peers)) + " peers"
+                message += "(" + str(len(self.peers)) + " peers)"
                 if self.logger:
                     self.logger.info(message)
                 else:
