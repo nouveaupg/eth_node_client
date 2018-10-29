@@ -1,7 +1,7 @@
 import node_information
 import logging
 import json
-import sys
+import time
 
 if __name__ == '__main__':
     logger = logging.getLogger("warden")
@@ -19,12 +19,6 @@ if __name__ == '__main__':
     # add the handlers to the logger
     logger.addHandler(fh)
     logger.addHandler(ch)
-
-    if len(sys.argv) == 2:
-        api_key = sys.argv[1]
-    else:
-        logger.error("No API key specified!")
-        sys.exit(1)
 
     config_stream = open("config.json", "r")
     config_data = json.load(config_stream)
@@ -46,13 +40,14 @@ if __name__ == '__main__':
             output_dict["blocks_behind"] = node_information.blocks_behind
 
         data = json.dumps(output_dict).encode('utf8')
-        req = urllib.request.Request(conditionsSetURL, data=data,
+        req = urllib.request.Request(config_data["api_endpoint"] + config_data["api_key"], data=data,
                                      headers={'content-type': 'application/json'})
         response = urllib.request.urlopen(req)
         if response.getcode() == 200:
             logger.info("Node information updated successfully.")
         else:
             logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
-
+        # delay for 5 minutes
+        time.sleep(config_data["polling_interval"])
         node_information.update()
 

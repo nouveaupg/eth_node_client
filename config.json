@@ -1,6 +1,6 @@
 {"ipc_address":"/home/ethereum/.ethereum/geth.ipc",
 "max_rpc_tries":5,
-"polling_interval":300,
+"polling_interval":300.0,
 "account":"0x58066fc55783551223aaf65588ca5049283a7de2",
 "api_endpoint":"http://icofactory.com/node_api/update/",
 "api_key":""}
