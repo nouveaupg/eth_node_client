@@ -1,7 +1,6 @@
+from urllib.request import Request, urlopen
 import node_information
 import logging
-import urllib
-from urllib.request import Request,urlopen
 import json
 import time
 
@@ -45,6 +44,7 @@ if __name__ == '__main__':
         req = Request(config_data["api_endpoint"] + config_data["api_key"],
                       data=data,
                       headers={'content-type': 'application/json'})
+        req.method = "POST"
         response = urlopen(req)
         if response.getcode() == 200:
             logger.info("Node information updated successfully.")
