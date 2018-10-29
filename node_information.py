@@ -13,9 +13,6 @@ class NodeInfo:
         self.config = json.load(config_file)
         config_file.close()
         self.logger = logger
-
-        # TODO: persistent peer db
-
         self.rpc_interface = rpc_interface.RPCInterface()
         self.enode = None
         self.name = None
@@ -77,7 +74,6 @@ class NodeInfo:
                                            caps=each["caps"],
                                            id=each["id"],
                                            network=each["network"]))
-                # TODO: feed into persistent peer database
                 message = "Successful admin_Peers IPC call: " + str(response_data["delay"]) + " seconds"
                 message += "(" + str(len(self.peers)) + " peers)"
                 if self.logger:
