@@ -47,7 +47,7 @@ if __name__ == '__main__':
                                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
                       method="POST")
         response = urlopen(req)
-        if response.getcode() == 200:
+        if response.status_code == 200:
             logger.info("Node information updated successfully.")
         else:
             logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
