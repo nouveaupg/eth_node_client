@@ -9,7 +9,7 @@ if __name__ == '__main__':
     logger = logging.getLogger("warden")
     logger.setLevel(logging.INFO)
     # create file handler which logs even debug messages
-    fh = logging.FileHandler('warden.log')
+    fh = logging.FileHandler('/root/warden.log')
     fh.setLevel(logging.DEBUG)
     # create console handler with a higher log level
     ch = logging.StreamHandler()
@@ -54,6 +54,8 @@ if __name__ == '__main__':
         else:
             logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
         # delay for 5 minutes
-        time.sleep(config_data["polling_interval"])
+        polling_interval = config_data["polling_interval"]
+        logger.info("Resting for {0} seconds".format(polling_interval))
+        time.sleep()
         node_monitor.update()
 
