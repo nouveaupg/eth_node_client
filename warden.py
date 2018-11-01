@@ -30,12 +30,15 @@ if __name__ == '__main__':
     node_monitor = node_information.NodeInfo(logger)
 
     while 1:
-        output_dict = dict(peers=node_monitor.peers,
+        output_dict = dict(peers=len(node_monitor.peers),
                            synchronized=node_monitor.synced,
                            latest_gas_price=node_monitor.gas_price,
                            name=node_monitor.name,
                            enode=node_monitor.enode,
                            latest_block=node_monitor.latest_block)
+        peer_log = open("peers_log/peers_{0}.json".format(int(time.time())), "w+")
+        json.dump(node_monitor, peer_log)
+        peer_log.close()
         if output_dict["synchronized"]:
             output_dict["blocks_behind"] = 0
         else:
