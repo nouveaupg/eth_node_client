@@ -59,6 +59,6 @@ if __name__ == '__main__':
         # delay for 5 minutes
         polling_interval = config_data["polling_interval"]
         logger.info("Resting for {0} seconds".format(polling_interval))
-        time.sleep()
+        time.sleep(polling_interval)
         node_monitor.update()
 
