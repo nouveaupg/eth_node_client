@@ -3,6 +3,7 @@ import node_information
 import logging
 import json
 import time
+import ssl
 
 if __name__ == '__main__':
     logger = logging.getLogger("warden")
@@ -40,13 +41,14 @@ if __name__ == '__main__':
         else:
             output_dict["blocks_behind"] = node_monitor.blocks_behind
 
-        data = json.dumps(output_dict).encode('utf8')
+        data = json.dumps(output_dict)
+        ssl_context = ssl.SSLContext()
         req = Request(config_data["api_endpoint"] + config_data["api_key"],
                       data=data,
                       headers={'Content-Type': 'application/json',
                                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
                       method="POST")
-        response = urlopen(req)
+        response = urlopen(req,context=ssl_context)
         if response.status_code == 200:
             logger.info("Node information updated successfully.")
         else:
