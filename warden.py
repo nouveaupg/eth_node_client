@@ -37,7 +37,7 @@ if __name__ == '__main__':
                            enode=node_monitor.enode,
                            latest_block=node_monitor.latest_block)
         peer_log = open("peers_log/peers_{0}.json".format(int(time.time())), "w+")
-        json.dump(node_monitor, peer_log)
+        json.dump(node_monitor.peers, peer_log)
         peer_log.close()
         if output_dict["synchronized"]:
             output_dict["blocks_behind"] = 0
