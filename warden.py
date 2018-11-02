@@ -7,9 +7,10 @@ import time
 import ssl
 import os
 
-CONSOLE_LOG_LEVEL = logging.DEBUG
-FILE_LOG_LEVEL = logging.INFO
+CONSOLE_LOG_LEVEL = logging.INFO
+FILE_LOG_LEVEL = logging.DEBUG
 CONFIG_FILE_NAME = "config.json"
+WARDEN_LOG_PATH = "/root/warden"
 
 
 def load_config_from_file(filename):
@@ -38,7 +39,7 @@ class WardenThread(Thread):
         self.config = load_config_from_file(CONFIG_FILENAME)
         self.logger = logging.getLogger("warden.thread")
         # create file handler which logs even debug messages
-        thread_fh = logging.FileHandler("/root/warden.log")
+        thread_fh = logging.FileHandler(WARDEN_LOG_PATH)
         thread_fh.setLevel(FILE_LOG_LEVEL)
         # create formatter and add it to the handlers
         thread_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -51,7 +52,8 @@ class WardenThread(Thread):
         node_monitor = node_information.NodeInfo(logger)
 
         while 1:
-            output_dict = dict(peers=len(node_monitor.peers),
+            peer_count = len(node_monitor.peers)
+            output_dict = dict(peers=peer_count,
                                synchronized=node_monitor.synced,
                                latest_gas_price=node_monitor.gas_price,
                                name=node_monitor.name,
@@ -60,7 +62,7 @@ class WardenThread(Thread):
             peer_log = open("peers_log/peers_{0}.json".format(int(time.time())), "w+")
             json.dump(node_monitor.peers, peer_log)
             peer_log.close()
-            logger.debug("Wrote the {0} current peers to {1}",)
+            logger.debug("Wrote the {0} current peers to {1}".format(peer_count))
             if output_dict["synchronized"]:
                 output_dict["blocks_behind"] = 0
             else:
@@ -128,36 +130,43 @@ if __name__ == '__main__':
     #     if config_data is none:
     #         fatal_error("could not find config file or download from update.")
     # fh.close()
-    ch.close()
 
-    try:
-        pid = os.fork()
-        if pid > 0:
-            # exit the launching process
-            sys.exit(0)
-    except OSError as err:
-        sys.stderr.write('_Fork #1 failed: {0}\n'.format(err))
-        sys.exit(1)
-    # decouple from parent environment
-    os.chdir('/')
-    os.setsid()
-    os.umask(0)
-    # do second fork
-    try:
-        pid = os.fork()
-        if pid > 0:
-            # exit from second parent
-            sys.exit(0)
-    except OSError as err:
-        sys.stderr.write('_Fork #2 failed: {0}\n'.format(err))
-        sys.exit(1)
-    # redirect standard file descriptors
-    print("Launched master process, kill pid: {0} to terminate.".format(os.getpid()))
-    sys.stdout.flush()
-    sys.stderr.flush()
-    si = open(os.devnull, 'r')
-    so = open(os.devnull, 'w')
-    se = open(os.devnull, 'w')
-    os.dup2(si.fileno(), sys.stdin.fileno())
-    os.dup2(so.fileno(), sys.stdout.fileno())
-    os.dup2(se.fileno(), sys.stderr.fileno())
+    daemonize = config_data["daemonize"]
+    if daemonize:
+        logger.info("Attempting to daemonize the warden process.")
+        try:
+            pid = os.fork()
+            if pid > 0:
+                # exit the launching process
+                sys.exit(0)
+        except OSError as err:
+            logger.fatal('_Fork #1 failed: {0}'.format(err))
+            sys.exit(1)
+        # decouple from parent environment
+        os.chdir('/')
+        os.setsid()
+        os.umask(0)
+        # do second fork
+        try:
+            pid = os.fork()
+            if pid > 0:
+                # exit from second parent
+                sys.exit(0)
+        except OSError as err:
+            logger.info('_Fork #2 failed: {0}'.format(err))
+            sys.exit(1)
+        # redirect standard file descriptors
+        logger.info("Launched master process, kill pid: {0} to terminate.".format(os.getpid()))
+        sys.stdout.flush()
+        sys.stderr.flush()
+        si = open(os.devnull, 'r')
+        so = open(os.devnull, 'w')
+        se = open(os.devnull, 'w')
+        os.dup2(si.fileno(), sys.stdin.fileno())
+        os.dup2(so.fileno(), sys.stdout.fileno())
+        os.dup2(se.fileno(), sys.stderr.fileno())
+    else:
+        logger.info("Not daemonizing this process, you can change this in the configuration file.")
+
+    warden = WardenThread()
+    warden.run()

@@ -3,4 +3,6 @@
 "polling_interval":300.0,
 "account":"0x58066fc55783551223aaf65588ca5049283a7de2",
 "api_endpoint":"https://erc20master.com/node_api/update/",
-"api_key":""}
+"api_key":"",
+"log_file_path":"/root/warden.log",
+"daemonize": false}
