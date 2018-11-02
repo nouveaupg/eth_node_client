@@ -1,15 +1,15 @@
-# python 2 compatible utility for getting the gas price from a geth node in a human readable format
-# retained for historical reasons
+# Python 3 script to get the latest gas price (or for playing around with the geth API
 # October 19, 2018
 import json
 import socket
 
 
 def wei_to_ether(wei):
-    return 1.0 * wei / 10**18
+    return 1.0 * wei / 10 ** 18
 
 
-data = {"jsonrpc":"2.0","method":"eth_gasPrice","params":[],"id":1}
+data = {"jsonrpc": "2.0", "method": "eth_gasPrice", "params": [], "id": 1}
+
 
 def setup_socket():
     new_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -34,6 +34,6 @@ for _ in range(3):
     break
 
 response = json.loads(response_raw)
-result = wei_to_ether(int(response['result'],16))
+result = wei_to_ether(int(response['result'], 16))
 # probably better to keep in scientific/engineering notation
 print("Gas Price: " + str(result) + " ETH")
