@@ -59,10 +59,11 @@ class WardenThread(Thread):
                                name=node_monitor.name,
                                enode=node_monitor.enode,
                                latest_block=node_monitor.latest_block)
-            peer_log = open("peers_log/peers_{0}.json".format(int(time.time())), "w+")
+            peer_log_file_name = "peers_log/peers_{0}.json".format(int(time.time()))
+            peer_log = open(peer_log_file_name, "w+")
             json.dump(node_monitor.peers, peer_log)
             peer_log.close()
-            logger.debug("Wrote the {0} current peers to {1}".format(peer_count))
+            logger.debug("Wrote the {0} current peers to {1}".format(peer_count, peer_log_file_name))
             if output_dict["synchronized"]:
                 output_dict["blocks_behind"] = 0
             else:
