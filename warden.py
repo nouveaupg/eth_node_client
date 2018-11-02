@@ -163,8 +163,13 @@ if __name__ == '__main__':
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
+        warden = WardenThread()
+        warden.setDaemon(True)
+        warden.start()
     else:
         logger.info("Not daemonizing this process, you can change this in the configuration file.")
 
-    warden = WardenThread()
-    warden.run()
+        warden = WardenThread()
+        warden.start()
+
+
