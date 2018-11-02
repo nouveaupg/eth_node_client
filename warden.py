@@ -1,15 +1,107 @@
+from threading import Thread
 from urllib.request import Request, urlopen
 import node_information
 import logging
 import json
 import time
 import ssl
+import os
+
+CONSOLE_LOG_LEVEL = logging.DEBUG
+FILE_LOG_LEVEL = logging.INFO
+CONFIG_FILE_NAME = "config.json"
+
+
+def load_config_from_file(filename):
+    try:
+        fp = open(filename, "r+")
+        json_data = json.load(fp)
+        fp.close()
+        return json_data
+    except IOError as e:
+        if e.errno == 2:
+            return None
+
+
+def fatal_error(message):
+    logger.error(message)
+    os.exit(1)
+
+
+def check_for_updates(force):
+    return force
+
+
+class WardenThread(Thread):
+    def __init__(self):
+        # set up logging for warden thread
+        self.config = load_config_from_file(CONFIG_FILENAME)
+        self.logger = logging.getLogger("warden.thread")
+        # create file handler which logs even debug messages
+        thread_fh = logging.FileHandler("/root/warden.log")
+        thread_fh.setLevel(FILE_LOG_LEVEL)
+        # create formatter and add it to the handlers
+        thread_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        thread_fh.setFormatter(thread_formatter)
+        # add the handlers to the logger
+        self.logger.addHandler(thread_fh)
+
+    def run(self):
+        logger.info("Warden daemon loaded: {0} second polling interval.".format(config_data["polling_interval"]))
+        node_monitor = node_information.NodeInfo(logger)
+
+        while 1:
+            output_dict = dict(peers=len(node_monitor.peers),
+                               synchronized=node_monitor.synced,
+                               latest_gas_price=node_monitor.gas_price,
+                               name=node_monitor.name,
+                               enode=node_monitor.enode,
+                               latest_block=node_monitor.latest_block)
+            peer_log = open("peers_log/peers_{0}.json".format(int(time.time())), "w+")
+            json.dump(node_monitor.peers, peer_log)
+            peer_log.close()
+            logger.debug("Wrote the {0} current peers to {1}",)
+            if output_dict["synchronized"]:
+                output_dict["blocks_behind"] = 0
+            else:
+                output_dict["blocks_behind"] = node_monitor.blocks_behind
+
+            data = json.dumps(output_dict).encode()
+            ssl_context = ssl.SSLContext()
+            ssl_context.load_default_certs()
+            api_endpoint_url = config_data["api_endpoint"] + config_data["api_key"]
+
+            self.logger.debug("Making request to api_endpoint: " + api_endpoint_url)
+
+            req = Request(api_endpoint_url,
+                          data=data,
+                          headers={'Content-Type': 'application/json',
+                                   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
+                          method="POST")
+            response = urlopen(req, context=ssl_context)
+            if response.getcode() == 200:
+                logger.info("Node information updated successfully.")
+            else:
+                logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
+            # delay for 5 minutes
+            polling_interval = config_data["polling_interval"]
+            logger.info("Resting for {0} seconds".format(polling_interval))
+            time.sleep(polling_interval)
+            node_monitor.update()
+
 
 if __name__ == '__main__':
+    print("Warden v1 started.")
+    print("Loading configuration from:" + CONFIG_FILE_NAME)
+    config_data = load_config_from_file(CONFIG_FILE_NAME)
+    if config_data is None:
+        print("Could not open configuration file.")
+        exit(1)
+
     logger = logging.getLogger("warden")
     logger.setLevel(logging.INFO)
     # create file handler which logs even debug messages
-    fh = logging.FileHandler('/root/warden.log')
+    fh = logging.FileHandler(config_data["log_file_path"])
     fh.setLevel(logging.DEBUG)
     # create console handler with a higher log level
     ch = logging.StreamHandler()
@@ -22,43 +114,50 @@ if __name__ == '__main__':
     logger.addHandler(fh)
     logger.addHandler(ch)
 
-    config_stream = open("config.json", "r")
-    config_data = json.load(config_stream)
-    config_stream.close()
+    # TODO: maybe this would be a use for some sort of git module?
+    #
+    # print("checking server for updates...")
+    # if config_data:
+    #     updated = check_for_updates(false)
+    # else:
+    #     updated = check_for_updates(true)
+    # if updated:
+    #     logger.info("successfully installed update from server.")
+    # else:
+    #     logger.info("update not installed.")
+    #     if config_data is none:
+    #         fatal_error("could not find config file or download from update.")
+    # fh.close()
+    ch.close()
 
-    logger.info("Warden configuration loaded: {0} second polling interval.".format(config_data["polling_interval"]))
-    node_monitor = node_information.NodeInfo(logger)
-
-    while 1:
-        output_dict = dict(peers=len(node_monitor.peers),
-                           synchronized=node_monitor.synced,
-                           latest_gas_price=node_monitor.gas_price,
-                           name=node_monitor.name,
-                           enode=node_monitor.enode,
-                           latest_block=node_monitor.latest_block)
-        peer_log = open("peers_log/peers_{0}.json".format(int(time.time())), "w+")
-        json.dump(node_monitor.peers, peer_log)
-        peer_log.close()
-        if output_dict["synchronized"]:
-            output_dict["blocks_behind"] = 0
-        else:
-            output_dict["blocks_behind"] = node_monitor.blocks_behind
-
-        data = json.dumps(output_dict).encode()
-        ssl_context = ssl.SSLContext()
-        req = Request(config_data["api_endpoint"] + config_data["api_key"],
-                      data=data,
-                      headers={'Content-Type': 'application/json',
-                               'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
-                      method="POST")
-        response = urlopen(req, context=ssl_context)
-        if response.getcode() == 200:
-            logger.info("Node information updated successfully.")
-        else:
-            logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
-        # delay for 5 minutes
-        polling_interval = config_data["polling_interval"]
-        logger.info("Resting for {0} seconds".format(polling_interval))
-        time.sleep(polling_interval)
-        node_monitor.update()
-
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # exit the launching process
+            sys.exit(0)
+    except OSError as err:
+        sys.stderr.write('_Fork #1 failed: {0}\n'.format(err))
+        sys.exit(1)
+    # decouple from parent environment
+    os.chdir('/')
+    os.setsid()
+    os.umask(0)
+    # do second fork
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # exit from second parent
+            sys.exit(0)
+    except OSError as err:
+        sys.stderr.write('_Fork #2 failed: {0}\n'.format(err))
+        sys.exit(1)
+    # redirect standard file descriptors
+    print("Launched master process, kill pid: {0} to terminate.".format(os.getpid()))
+    sys.stdout.flush()
+    sys.stderr.flush()
+    si = open(os.devnull, 'r')
+    so = open(os.devnull, 'w')
+    se = open(os.devnull, 'w')
+    os.dup2(si.fileno(), sys.stdin.fileno())
+    os.dup2(so.fileno(), sys.stdout.fileno())
+    os.dup2(se.fileno(), sys.stderr.fileno())
