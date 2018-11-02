@@ -6,6 +6,7 @@ import json
 import time
 import ssl
 import os
+import sys
 
 CONSOLE_LOG_LEVEL = logging.INFO
 FILE_LOG_LEVEL = logging.DEBUG
@@ -24,31 +25,27 @@ def load_config_from_file(filename):
             return None
 
 
-def fatal_error(message):
-    logger.error(message)
-    os.exit(1)
-
-
 def check_for_updates(force):
     return force
 
 
 class WardenThread(Thread):
-    def __init__(self):
-        # set up logging for warden thread
-        self.config = load_config_from_file(CONFIG_FILENAME)
-        self.logger = logging.getLogger("warden.thread")
+
+    def run(self):
+        config_data = load_config_from_file(CONFIG_FILE_NAME)
+        if config_data is None:
+            return
+        logger = logging.getLogger("warden.thread")
         # create file handler which logs even debug messages
-        thread_fh = logging.FileHandler(WARDEN_LOG_PATH)
+        thread_fh = logging.FileHandler(config_data["log_file_path"])
         thread_fh.setLevel(FILE_LOG_LEVEL)
         # create formatter and add it to the handlers
         thread_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         thread_fh.setFormatter(thread_formatter)
         # add the handlers to the logger
-        self.logger.addHandler(thread_fh)
+        logger.addHandler(thread_fh)
 
-    def run(self):
-        logger.info("Warden daemon loaded: {0} second polling interval.".format(config_data["polling_interval"]))
+        logger.info("Warden worker thread loaded: {0} second polling interval.".format(config_data["polling_interval"]))
         node_monitor = node_information.NodeInfo(logger)
 
         while 1:
@@ -74,7 +71,7 @@ class WardenThread(Thread):
             ssl_context.load_default_certs()
             api_endpoint_url = config_data["api_endpoint"] + config_data["api_key"]
 
-            self.logger.debug("Making request to api_endpoint: " + api_endpoint_url)
+            logger.debug("Making request to api_endpoint: " + api_endpoint_url)
 
             req = Request(api_endpoint_url,
                           data=data,
