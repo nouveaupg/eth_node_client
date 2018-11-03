@@ -133,8 +133,6 @@ if __name__ == '__main__':
 
     warden = WardenThread()
     if daemonize:
-        warden.setDaemon(True)
-        warden.start()
         logger.info("Attempting to daemonize the warden process.")
         try:
             pid = os.fork()
@@ -169,6 +167,8 @@ if __name__ == '__main__':
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
 
+        warden.setDaemon(True)
+        warden.start()
         # TODO: spawn watchdog process
 
     else:
