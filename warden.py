@@ -164,13 +164,10 @@ if __name__ == '__main__':
         pid_file.write(str(pid))
         pid_file.close()
         sys.stdout.flush()
-        sys.stderr.flush()
         si = open(os.devnull, 'r')
         so = open(os.devnull, 'w')
-        se = open(os.devnull, 'w')
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
-        os.dup2(se.fileno(), sys.stderr.fileno())
 
         # TODO: spawn watchdog process
 
