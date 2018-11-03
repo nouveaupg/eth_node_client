@@ -16,7 +16,7 @@ WARDEN_LOG_PATH = "/root/warden"
 
 def load_config_from_file(filename):
     try:
-        fp = open(filename, "r+")
+        fp = open(filename, "r")
         json_data = json.load(fp)
         fp.close()
         return json_data
@@ -57,7 +57,7 @@ class WardenThread(Thread):
                                enode=node_monitor.enode,
                                latest_block=node_monitor.latest_block)
             peer_log_file_name = "peers_log/peers_{0}.json".format(int(time.time()))
-            peer_log = open(peer_log_file_name, "w+")
+            peer_log = open(peer_log_file_name, "w")
             json.dump(node_monitor.peers, peer_log)
             peer_log.close()
             logger.debug("Wrote the {0} current peers to {1}".format(peer_count, peer_log_file_name))
@@ -130,7 +130,11 @@ if __name__ == '__main__':
     # fh.close()
 
     daemonize = config_data["daemonize"]
+
+    warden = WardenThread()
     if daemonize:
+        warden.setDaemon(True)
+        warden.start()
         logger.info("Attempting to daemonize the warden process.")
         try:
             pid = os.fork()
@@ -154,7 +158,11 @@ if __name__ == '__main__':
             logger.info('_Fork #2 failed: {0}'.format(err))
             sys.exit(1)
         # redirect standard file descriptors
-        logger.info("Launched master process, kill pid: {0} to terminate.".format(os.getpid()))
+        pid = os.getpid()
+        logger.info("Launched master process, kill pid: {0} to terminate.".format(pid))
+        pid_file = open("/tmp/warden.pid", "w")
+        pid_file.write(str(pid))
+        pid_file.close()
         sys.stdout.flush()
         sys.stderr.flush()
         si = open(os.devnull, 'r')
@@ -163,13 +171,12 @@ if __name__ == '__main__':
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
-        warden = WardenThread()
-        warden.setDaemon(True)
-        warden.start()
+
+        # TODO: spawn watchdog process
+
     else:
         logger.info("Not daemonizing this process, you can change this in the configuration file.")
 
-        warden = WardenThread()
         warden.start()
 
 
