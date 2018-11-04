@@ -1,0 +1,6 @@
+[Unit]
+Description=Warden Service
+
+
+[Service]
+ExecStart=/root/eth_node_client/warden.py
