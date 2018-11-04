@@ -1,10 +1,14 @@
 # singleton which monitors the status of the node
 
+import json
+import unittest
 import ipc_socket
 import rpc_interface
-import json
 import util
-import unittest
+
+UNIT_TESTING = False
+if UNIT_TESTING:
+    import ipc_test_harness
 
 
 class NodeInfo:
@@ -51,7 +55,10 @@ class NodeInfo:
 
     def _admin_node_info(self):
         request_data = self.rpc_interface.get_node_info()
-        ipc = ipc_socket.GethInterface(request_data)
+        if UNIT_TESTING:
+            ipc = ipc_test_harness.IPCTestHarness(request_data)
+        else:
+            ipc = ipc_socket.GethInterface(request_data)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 
@@ -78,7 +85,10 @@ class NodeInfo:
 
     def _admin_peers(self):
         request_data = self.rpc_interface.get_peers()
-        ipc = ipc_socket.GethInterface(request_data)
+        if UNIT_TESTING:
+            ipc = ipc_test_harness.IPCTestHarness(request_data)
+        else:
+            ipc = ipc_socket.GethInterface(request_data)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 
@@ -109,7 +119,10 @@ class NodeInfo:
 
     def _eth_gasPrice(self):
         request_data = self.rpc_interface.eth_gas_price()
-        ipc = ipc_socket.GethInterface(request_data)
+        if UNIT_TESTING:
+            ipc = ipc_test_harness.IPCTestHarness(request_data)
+        else:
+            ipc = ipc_socket.GethInterface(request_data)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 
@@ -134,7 +147,10 @@ class NodeInfo:
 
     def _getLatestBlock(self):
         request_data = self.rpc_interface.get_latest_block()
-        ipc = ipc_socket.GethInterface(request_data)
+        if UNIT_TESTING:
+            ipc = ipc_test_harness.IPCTestHarness(request_data)
+        else:
+            ipc = ipc_socket.GethInterface(request_data)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 
@@ -164,7 +180,10 @@ class NodeInfo:
 
     def _getBalance(self):
         request_data = self.rpc_interface.get_balance(self.config["account"])
-        ipc = ipc_socket.GethInterface(request_data)
+        if UNIT_TESTING:
+            ipc = ipc_test_harness.IPCTestHarness(request_data)
+        else:
+            ipc = ipc_socket.GethInterface(request_data)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 
@@ -188,7 +207,10 @@ class NodeInfo:
 
     def _eth_syncing(self):
         request_data = self.rpc_interface.check_sync()
-        ipc = ipc_socket.GethInterface(request_data)
+        if UNIT_TESTING:
+            ipc = ipc_test_harness.IPCTestHarness(request_data)
+        else:
+            ipc = ipc_socket.GethInterface(request_data)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 
