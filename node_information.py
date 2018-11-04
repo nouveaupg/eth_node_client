@@ -60,7 +60,7 @@ class NodeInfo:
         if UNIT_TESTING:
             ipc = ipc_test_harness.IPCTestHarness(request_data)
         else:
-            ipc = ipc_socket.GethInterface(request_data)
+            ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 
@@ -90,7 +90,7 @@ class NodeInfo:
         if UNIT_TESTING:
             ipc = ipc_test_harness.IPCTestHarness(request_data)
         else:
-            ipc = ipc_socket.GethInterface(request_data)
+            ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 
@@ -124,7 +124,7 @@ class NodeInfo:
         if UNIT_TESTING:
             ipc = ipc_test_harness.IPCTestHarness(request_data)
         else:
-            ipc = ipc_socket.GethInterface(request_data)
+            ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 
@@ -152,7 +152,7 @@ class NodeInfo:
         if UNIT_TESTING:
             ipc = ipc_test_harness.IPCTestHarness(request_data)
         else:
-            ipc = ipc_socket.GethInterface(request_data)
+            ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 
@@ -185,7 +185,7 @@ class NodeInfo:
         if UNIT_TESTING:
             ipc = ipc_test_harness.IPCTestHarness(request_data)
         else:
-            ipc = ipc_socket.GethInterface(request_data)
+            ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 
@@ -212,7 +212,7 @@ class NodeInfo:
         if UNIT_TESTING:
             ipc = ipc_test_harness.IPCTestHarness(request_data)
         else:
-            ipc = ipc_socket.GethInterface(request_data)
+            ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
         response_data = self.rpc_interface.process_response(response_stream)
 

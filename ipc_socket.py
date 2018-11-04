@@ -3,14 +3,12 @@ import json
 
 
 class GethInterface:
-    def __init__(self, request_data):
+    def __init__(self, request_data, config_data):
         if type(request_data) is not str:
             self.request_data = json.dumps(request_data)
         else:
             self.request_data = request_data
-        config_file = open("config.json", "r")
-        self.config = json.load(config_file)
-        config_file.close()
+        self.config = config_data
 
     def setup_socket(self):
         new_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
