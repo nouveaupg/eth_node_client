@@ -1,3 +1,7 @@
+# Analyzes the JSON dump of peers from each node
+# basically finished, but needs debugging
+# TODO: needs debugging!
+
 import MySQLdb
 import json
 import os
