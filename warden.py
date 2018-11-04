@@ -129,7 +129,10 @@ if __name__ == '__main__':
     warden = WardenThread()
     if daemonize:
         warden.setDaemon(True)
-    warden.start()
+        warden.start()
+    else:
+        logger.info("Not daemonizing this process, you can change this in the configuration file.")
+        warden.run()
 
     if daemonize:
         # This doesn't currently work
@@ -171,7 +174,5 @@ if __name__ == '__main__':
 
         # TODO: spawn watchdog process
 
-    else:
-        logger.info("Not daemonizing this process, you can change this in the configuration file.")
 
 
