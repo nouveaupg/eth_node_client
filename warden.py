@@ -45,11 +45,12 @@ class WardenThread(Thread):
         # add the handlers to the logger
         logger.addHandler(thread_fh)
 
-        logger.info("Warden worker thread loaded: {0} second polling interval.".format(config_data["polling_interval"]))
+        logger.info("Warden worker thread (tid:{0}) loaded: {1} second polling interval.".format(self.ident, config_data["polling_interval"]))
         node_monitor = node_information.NodeInfo(logger)
 
         while 1:
             output_dict = node_monitor.output_request
+            peer_count = len(node_monitor.peers)
             peer_log_file_name = "peers_log/peers_{0}.json".format(int(time.time()))
             peer_log = open(peer_log_file_name, "w")
             json.dump(node_monitor.peers, peer_log)
