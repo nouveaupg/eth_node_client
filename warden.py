@@ -10,8 +10,8 @@ import sys
 
 CONSOLE_LOG_LEVEL = logging.INFO
 FILE_LOG_LEVEL = logging.DEBUG
-CONFIG_FILE_NAME = "config.json"
-WARDEN_LOG_PATH = "/root/warden"
+CONFIG_FILE_NAME = "/root/config.json"
+WARDEN_LOG_PATH = "/root/warden.log"
 
 
 def load_config_from_file(filename):
@@ -132,6 +132,7 @@ if __name__ == '__main__':
     warden.start()
 
     if daemonize:
+        # This doesn't currently work
         logger.info("Attempting to daemonize the warden process.")
         try:
             pid = os.fork()
