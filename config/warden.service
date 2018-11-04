@@ -3,4 +3,8 @@ Description=Warden Service
 
 
 [Service]
+Type=forking
 ExecStart=/root/eth_node_client/warden.py
+Restart=always
+StartLimitBurst=3
+StartLimitInterval=60s
