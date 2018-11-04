@@ -12,6 +12,7 @@ CONSOLE_LOG_LEVEL = logging.INFO
 FILE_LOG_LEVEL = logging.DEBUG
 CONFIG_FILE_NAME = "/root/eth_node_client/config.json"
 WARDEN_LOG_PATH = "/root/warden.log"
+PEER_LOG_PATH = "/root/eth_node_client/"
 
 
 def load_config_from_file(filename):
@@ -52,7 +53,7 @@ class WardenThread(Thread):
             output_dict = node_monitor.output_request
             peer_count = len(node_monitor.peers)
             peer_log_file_name = "peers_log/peers_{0}.json".format(int(time.time()))
-            peer_log = open(peer_log_file_name, "w")
+            peer_log = open(PEER_LOG_PATH + peer_log_file_name, "w")
             json.dump(node_monitor.peers, peer_log)
             peer_log.close()
             logger.debug("Wrote the {0} current peers to {1}".format(peer_count, peer_log_file_name))
