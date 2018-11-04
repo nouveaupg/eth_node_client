@@ -30,6 +30,25 @@ class NodeInfo:
         self._admin_node_info()
         self.update()
 
+    def update(self):
+        result = self._eth_syncing()
+        if result and self.synced:
+            self._eth_gasPrice()
+            self._admin_peers()
+            self._getLatestBlock()
+            self._getBalance()
+
+    @property
+    def output_request(self):
+        output = {"synchronized": self.synced,
+                  "peers": len(self.peers),
+                  "gas_price": self.gas_price,
+                  "balance": self.balance,
+                  "blocks_behind": self.blocks_behind}
+        for each in self.latest_block.keys():
+            output["latest_block_" + each] = self.latest_block[each]
+        return output
+
     def _admin_node_info(self):
         request_data = self.rpc_interface.get_node_info()
         ipc = ipc_socket.GethInterface(request_data)
@@ -150,7 +169,7 @@ class NodeInfo:
         response_data = self.rpc_interface.process_response(response_stream)
 
         if type(response_data) == dict:
-            self.total_rpc_delay == response_data["delay"]
+            self.total_rpc_delay = response_data["delay"]
             self.total_rpc_calls += 1
             if "result" in response_data:
                 message = "Successful eth_getBalance IPC call: " + str(response_data["delay"]) + " seconds"
@@ -199,14 +218,6 @@ class NodeInfo:
             else:
                 print(message)
             return False
-
-    def update(self):
-        result = self._eth_syncing()
-        if result and self.synced:
-            self._eth_gasPrice()
-            self._admin_peers()
-            self._getLatestBlock()
-            self._getBalance()
 
 
 class NodeInfoUnitTests(unittest.TestCase):

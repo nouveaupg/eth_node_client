@@ -49,13 +49,7 @@ class WardenThread(Thread):
         node_monitor = node_information.NodeInfo(logger)
 
         while 1:
-            peer_count = len(node_monitor.peers)
-            output_dict = dict(peers=peer_count,
-                               synchronized=node_monitor.synced,
-                               latest_gas_price=node_monitor.gas_price,
-                               name=node_monitor.name,
-                               enode=node_monitor.enode,
-                               latest_block=node_monitor.latest_block)
+            output_dict = node_monitor.output_request
             peer_log_file_name = "peers_log/peers_{0}.json".format(int(time.time()))
             peer_log = open(peer_log_file_name, "w")
             json.dump(node_monitor.peers, peer_log)
@@ -133,6 +127,10 @@ if __name__ == '__main__':
 
     warden = WardenThread()
     if daemonize:
+        warden.setDaemon(True)
+    warden.start()
+
+    if daemonize:
         logger.info("Attempting to daemonize the warden process.")
         try:
             pid = os.fork()
@@ -161,13 +159,13 @@ if __name__ == '__main__':
         pid_file = open("/tmp/warden.pid", "w")
         pid_file.write(str(pid))
         pid_file.close()
-        #sys.stdout.flush()
-        #si = open(os.devnull, 'r')
-        #so = open(os.devnull, 'w')
-        #se = open(os.devnull, 'w')
-        #os.dup2(si.fileno(), sys.stdin.fileno())
-        #os.dup2(so.fileno(), sys.stdout.fileno())
-        #os.dup2(se.fileno(), sys.stderr.fileno())
+        sys.stdout.flush()
+        si = open(os.devnull, 'r')
+        so = open(os.devnull, 'w')
+        se = open(os.devnull, 'w')
+        os.dup2(si.fileno(), sys.stdin.fileno())
+        os.dup2(so.fileno(), sys.stdout.fileno())
+        os.dup2(se.fileno(), sys.stderr.fileno())
         warden.setDaemon(True)
         warden.start()
 
@@ -175,7 +173,5 @@ if __name__ == '__main__':
 
     else:
         logger.info("Not daemonizing this process, you can change this in the configuration file.")
-
-        warden.start()
 
 
