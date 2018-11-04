@@ -6,6 +6,8 @@ import ipc_socket
 import rpc_interface
 import util
 
+CONFIG_FILE_NAME = "/root/eth_node_client/config.json"
+
 UNIT_TESTING = False
 if UNIT_TESTING:
     import ipc_test_harness
@@ -13,7 +15,7 @@ if UNIT_TESTING:
 
 class NodeInfo:
     def __init__(self, logger):
-        config_file = open("config.json", "r")
+        config_file = open(CONFIG_FILE_NAME, "r")
         self.config = json.load(config_file)
         config_file.close()
         self.logger = logger
