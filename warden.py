@@ -10,9 +10,9 @@ import sys
 
 CONSOLE_LOG_LEVEL = logging.INFO
 FILE_LOG_LEVEL = logging.DEBUG
-CONFIG_FILE_NAME = "/root/eth_node_client/config.json"
-WARDEN_LOG_PATH = "/root/warden.log"
-PEER_LOG_PATH = "/root/eth_node_client/"
+CONFIG_FILE_NAME = "config.json"
+WARDEN_LOG_PATH = "warden.log"
+PEER_LOG_PATH = ""
 
 
 def load_config_from_file(filename):

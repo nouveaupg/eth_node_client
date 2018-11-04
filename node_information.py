@@ -6,9 +6,9 @@ import ipc_socket
 import rpc_interface
 import util
 
-CONFIG_FILE_NAME = "/root/eth_node_client/config.json"
+CONFIG_FILE_NAME = "config.json"
 
-UNIT_TESTING = False
+UNIT_TESTING = True
 if UNIT_TESTING:
     import ipc_test_harness
 
@@ -58,7 +58,7 @@ class NodeInfo:
     def _admin_node_info(self):
         request_data = self.rpc_interface.get_node_info()
         if UNIT_TESTING:
-            ipc = ipc_test_harness.IPCTestHarness(request_data)
+            ipc = ipc_test_harness.IPCTestHarness(request_data, self.config)
         else:
             ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
@@ -88,7 +88,7 @@ class NodeInfo:
     def _admin_peers(self):
         request_data = self.rpc_interface.get_peers()
         if UNIT_TESTING:
-            ipc = ipc_test_harness.IPCTestHarness(request_data)
+            ipc = ipc_test_harness.IPCTestHarness(request_data, self.config)
         else:
             ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
@@ -122,7 +122,7 @@ class NodeInfo:
     def _eth_gasPrice(self):
         request_data = self.rpc_interface.eth_gas_price()
         if UNIT_TESTING:
-            ipc = ipc_test_harness.IPCTestHarness(request_data)
+            ipc = ipc_test_harness.IPCTestHarness(request_data, self.config)
         else:
             ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
@@ -150,7 +150,7 @@ class NodeInfo:
     def _getLatestBlock(self):
         request_data = self.rpc_interface.get_latest_block()
         if UNIT_TESTING:
-            ipc = ipc_test_harness.IPCTestHarness(request_data)
+            ipc = ipc_test_harness.IPCTestHarness(request_data, self.config)
         else:
             ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
@@ -183,7 +183,7 @@ class NodeInfo:
     def _getBalance(self):
         request_data = self.rpc_interface.get_balance(self.config["account"])
         if UNIT_TESTING:
-            ipc = ipc_test_harness.IPCTestHarness(request_data)
+            ipc = ipc_test_harness.IPCTestHarness(request_data, self.config)
         else:
             ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
@@ -210,7 +210,7 @@ class NodeInfo:
     def _eth_syncing(self):
         request_data = self.rpc_interface.check_sync()
         if UNIT_TESTING:
-            ipc = ipc_test_harness.IPCTestHarness(request_data)
+            ipc = ipc_test_harness.IPCTestHarness(request_data, self.config)
         else:
             ipc = ipc_socket.GethInterface(request_data, self.config)
         response_stream = ipc.send()
