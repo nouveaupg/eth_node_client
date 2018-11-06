@@ -3,10 +3,12 @@
 import os
 import datetime
 
+PEER_LOG_DIR = "peers_log/"
+
 
 def clean_peers():
     cutoff = datetime.datetime.today() - datetime.timedelta(hours=24)
-    all_files = os.listdir(self.json_file_directory)
+    all_files = os.listdir(PEER_LOG_DIR)
     counter = 0
     for each_file in all_files:
         if PEER_DATA_FILE_NAME_REGEX.match(each_file):
@@ -14,11 +16,11 @@ def clean_peers():
             captured = datetime.datetime.fromtimestamp(timestamp)
             if captured > cutoff:
                 continue
-            target_file = self.json_file_directory + each_file
+            target_file = PEER_LOG_DIR + each_file
             print("Deleting " + target_file)
             os.remove(target_file)
             counter += 1
-    print("Removed {0} peer json files.".format(counter))
+    print("Removed {0} old peer.json files.".format(counter))
 
 
 if __name__ == "__main__":
