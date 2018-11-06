@@ -19,3 +19,7 @@ def clean_peers():
             os.remove(target_file)
             counter += 1
     print("Removed {0} peer json files.".format(counter))
+
+
+if __name__ == "__main__":
+    clean_peers()
