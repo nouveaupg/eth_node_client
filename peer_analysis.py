@@ -1,6 +1,4 @@
-# Analyzes the JSON dump of peers from each node
-# basically finished, but needs debugging
-# TODO: needs debugging!
+# Feeds peer data from JSON output into database
 
 import MySQLdb
 import json
@@ -10,7 +8,7 @@ import re
 
 MYSQL_HOST = "localhost"
 MYSQL_USER = "root"
-MYSQL_PASSWD = "beligerent8136"
+MYSQL_PASSWD = ""
 MYSQL_NAME = "peer_analysis"
 
 PEER_DATA_FILE_NAME_REGEX = re.compile("^peers_[0-9]{1,}.json$")
@@ -18,6 +16,11 @@ PEER_DATA_FILE_NAME_REGEX = re.compile("^peers_[0-9]{1,}.json$")
 SERVER_PEER_DATA_DIRECTORIES = {
     "Test": "peers_log/",
 }
+
+
+class InvalidPeer(Exception):
+    """Raised when a method is called on an invalid node (node_id=-1)"""
+    pass
 
 
 class PeerInfoIngest:
@@ -51,16 +54,19 @@ class PeerInfoIngest:
                 print(error_message)
 
     def get_latest_peer_connection(self):
+        if self.node_id == -1:
+            raise InvalidPeer
         sql = "SELECT captured FROM peer_connections WHERE node_id=%s ORDER BY connection_id DESC LIMIT 1"
         c = self._db.cursor()
         c.execute(sql, (self.node_id,))
         row = c.fetchone()
         if row:
             return row[0]
-        else:
-            return None
+        return None
 
     def injest_new_data(self):
+        if self.node_id == -1:
+            raise InvalidPeer
         latest_peer_connection = self.get_latest_peer_connection()
         all_files = os.listdir(self.json_file_directory)
         for each_file in all_files:
@@ -93,7 +99,7 @@ class PeerInfoIngest:
                 sql += "VALUES (%s,%s,%s,%s,%s,%s);"
                 c.execute(sql, (enode, id, remote_addr, caps, self.node_id, captured))
             self._db.commit()
-            return len(peer)
+            return len(json_data)
 
         except MySQLdb.Error as e:
             try:
