@@ -10,9 +10,8 @@ import sys
 
 CONSOLE_LOG_LEVEL = logging.INFO
 FILE_LOG_LEVEL = logging.DEBUG
-CONFIG_FILE_NAME = "config.json"
-WARDEN_LOG_PATH = "warden.log"
-PEER_LOG_PATH = ""
+
+CONFIG_FILE_PATH = "config.json"
 
 
 def load_config_from_file(filename):
@@ -33,7 +32,7 @@ def check_for_updates(force):
 class WardenThread(Thread):
 
     def run(self):
-        config_data = load_config_from_file(CONFIG_FILE_NAME)
+        config_data = load_config_from_file(CONFIG_FILE_PATH)
         if config_data is None:
             return
         logger = logging.getLogger("warden.thread")
@@ -46,14 +45,17 @@ class WardenThread(Thread):
         # add the handlers to the logger
         logger.addHandler(thread_fh)
 
-        logger.info("Warden worker thread (tid:{0}) loaded: {1} second polling interval.".format(self.ident, config_data["polling_interval"]))
+        logger.info("Warden worker thread (tid:{0}) loaded: {1} second polling interval.".format(self.ident,
+                                                                                                 config_data[
+                                                                                                     "polling_interval"
+                                                                                                 ]))
         node_monitor = node_information.NodeInfo(logger)
 
         while 1:
             output_dict = node_monitor.output_request
             peer_count = len(node_monitor.peers)
-            peer_log_file_name = "peers_log/peers_{0}.json".format(int(time.time()))
-            peer_log = open(PEER_LOG_PATH + peer_log_file_name, "w")
+            peer_log_file_name = "peers_{0}.json".format(int(time.time()))
+            peer_log = open(config_data[""] + peer_log_file_name, "w")
             json.dump(node_monitor.peers, peer_log)
             peer_log.close()
             logger.debug("Wrote the {0} current peers to {1}".format(peer_count, peer_log_file_name))
@@ -88,8 +90,8 @@ class WardenThread(Thread):
 
 if __name__ == '__main__':
     print("Warden v1 started.")
-    print("Loading configuration from:" + CONFIG_FILE_NAME)
-    config_data = load_config_from_file(CONFIG_FILE_NAME)
+    print("Loading configuration from:" + CONFIG_FILE_PATH)
+    config_data = load_config_from_file(CONFIG_FILE_PATH)
     if config_data is None:
         print("Could not open configuration file.")
         exit(1)
@@ -174,6 +176,3 @@ if __name__ == '__main__':
         os.dup2(se.fileno(), sys.stderr.fileno())
 
         # TODO: spawn watchdog process
-
-
-

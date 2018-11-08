@@ -64,7 +64,7 @@ class PeerInfoIngest:
             return row[0]
         return None
 
-    def injest_new_data(self):
+    def ingest_new_data(self):
         if self.node_id == -1:
             raise InvalidPeer
         latest_peer_connection = self.get_latest_peer_connection()
@@ -117,5 +117,5 @@ class PeerInfoIngest:
 if __name__ == "__main__":
     for each in SERVER_PEER_DATA_DIRECTORIES.keys():
         node = PeerInfoIngest(each, SERVER_PEER_DATA_DIRECTORIES[each])
-        node.injest_new_data()
+        node.ingest_new_data()
 
