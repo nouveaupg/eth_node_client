@@ -5,7 +5,7 @@ import datetime
 import re
 
 PEER_LOG_DIR = "peers_log/"
-PEER_DATA_FILE_NAME_REGEX = re.compile("^peers_[0-9]{1+}.json$")
+PEER_DATA_FILE_NAME_REGEX = re.compile("^peers_[0-9]{1,}.json$")
 
 
 def clean_peers():
