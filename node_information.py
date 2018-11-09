@@ -6,6 +6,7 @@ import ipc_socket
 import rpc_interface
 import util
 
+# probably should use an absolute path in production environment
 CONFIG_FILE_NAME = "config.json"
 
 UNIT_TESTING = True
@@ -19,6 +20,11 @@ class NodeInfo:
         self.config = json.load(config_file)
         config_file.close()
         self.logger = logger
+        if UNIT_TESTING:
+            if logger:
+                logger.warn("UNIT_TESTING is enabled. Kill process immediately if not in test environment!")
+            else:
+                print("UNIT_TESTING is enabled. Kill process immediately if not in test environment!")
         self.rpc_interface = rpc_interface.RPCInterface()
         self.enode = None
         self.name = None
