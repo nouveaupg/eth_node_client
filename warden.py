@@ -78,8 +78,8 @@ class WardenThread(Thread):
 
 if __name__ == '__main__':
     print("Warden v1 started.")
-    print("Loading configuration from:" + CONFIG_FILE_PATH)
-    config_data = load_config_from_file(CONFIG_FILE_PATH)
+    print("Loading configuration from:" + util.DEFAULT_CONFIG_PATH)
+    config_data = util.load_config_from_file()
     if config_data is None:
         print("Could not open configuration file.")
         exit(1)
