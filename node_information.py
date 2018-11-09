@@ -9,7 +9,7 @@ import util
 # probably should use an absolute path in production environment
 CONFIG_FILE_NAME = "config.json"
 
-UNIT_TESTING = True
+UNIT_TESTING = False
 if UNIT_TESTING:
     import ipc_test_harness
 
