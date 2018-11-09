@@ -1,8 +1,11 @@
-{"ipc_address":"/home/ethereum/.ethereum/geth.ipc",
-"max_rpc_tries":5,
-"polling_interval":300.0,
-"account":"0x58066fc55783551223aaf65588ca5049283a7de2",
-"api_endpoint":"https://erc20master.com/node_api/update/",
-"api_key":"",
-"log_file_path":"/root/warden.log",
-"daemonize": false}
+{
+  "ipc_address": "/home/ethereum/.ethereum/geth.ipc",
+  "max_rpc_tries": 5,
+  "polling_interval": 300.0,
+  "account": "0x58066fc55783551223aaf65588ca5049283a7de2",
+  "api_endpoint": "http://localhost:5000/node_api/update/",
+  "api_key": "86742f14566d656526c65cf11ad16bdf",
+  "log_file_path": "warden.log",
+  "peer_log_path": "peers_list/",
+  "daemonize": false
+}

@@ -55,7 +55,7 @@ class WardenThread(Thread):
             output_dict = node_monitor.output_request
             peer_count = len(node_monitor.peers)
             peer_log_file_name = "peers_{0}.json".format(int(time.time()))
-            peer_log = open(config_data[""] + peer_log_file_name, "w")
+            peer_log = open(config_data["peer_log_path"] + peer_log_file_name, "w")
             json.dump(node_monitor.peers, peer_log)
             peer_log.close()
             logger.debug("Wrote the {0} current peers to {1}".format(peer_count, peer_log_file_name))
