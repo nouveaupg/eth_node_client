@@ -1,4 +1,7 @@
 # Feeds peer data from JSON output into database
+# NOT intended for use on an actual client node, peer dumps
+# in raw json format should be used instead and pulled using
+# rsync to a dedicated analysis DB machine
 
 import MySQLdb
 import json
@@ -13,6 +16,7 @@ MYSQL_NAME = "peer_analysis"
 
 PEER_DATA_FILE_NAME_REGEX = re.compile("^peers_[0-9]{1,}.json$")
 
+# Update this
 SERVER_PEER_DATA_DIRECTORIES = {
     "Test": "peers_log/",
 }

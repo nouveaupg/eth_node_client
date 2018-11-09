@@ -7,22 +7,10 @@ import time
 import ssl
 import os
 import sys
+import util
 
 CONSOLE_LOG_LEVEL = logging.INFO
 FILE_LOG_LEVEL = logging.DEBUG
-
-CONFIG_FILE_PATH = "config.json"
-
-
-def load_config_from_file(filename):
-    try:
-        fp = open(filename, "r")
-        json_data = json.load(fp)
-        fp.close()
-        return json_data
-    except IOError as e:
-        if e.errno == 2:
-            return None
 
 
 def check_for_updates(force):
@@ -32,7 +20,7 @@ def check_for_updates(force):
 class WardenThread(Thread):
 
     def run(self):
-        config_data = load_config_from_file(CONFIG_FILE_PATH)
+        config_data = util.load_config_from_file()
         if config_data is None:
             return
         logger = logging.getLogger("warden.thread")

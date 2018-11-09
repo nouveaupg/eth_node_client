@@ -3,6 +3,7 @@ import binascii
 import json
 import rpc_interface
 import ipc_socket
+import util
 
 
 class ERC20Contract:
@@ -15,6 +16,7 @@ class ERC20Contract:
         self.erc20bin = json.load(binary_stream)
         binary_stream.close()
 
+        self.config = util.load_config_from_file()
         self.token_name = token_name
         self.token_symbol = symbol
         self.initial_supply = initial_supply
@@ -30,12 +32,12 @@ class ERC20Contract:
         hex_encoded_data = encoded_data.hex()
         object_data = '0x' + self.erc20bin["object"] + hex_encoded_data
         rpc = rpc_interface.RPCInterface()
-        result = rpc.eth_send_transaction("0x58066fc55783551223aaf65588ca5049283a7de2", object_data)
+        result = rpc.eth_send_transaction(config["account"], object_data)
         return result
 
 
 if __name__ == '__main__':
-        contract = ERC20Contract(token_name="Glosspoints",symbol="GS",initial_supply=50000)
+        contract = ERC20Contract(token_name="Glosspoints", symbol="XSGP", initial_supply=50000)
         res = contract.create_smart_contract()
         ipc_socket.GethInterface(res)
         result = ipc.send()
