@@ -1,13 +1,9 @@
 # singleton which monitors the status of the node
 
-import json
 import unittest
 import ipc_socket
 import rpc_interface
 import util
-
-# probably should use an absolute path in production environment
-CONFIG_FILE_NAME = "config.json"
 
 UNIT_TESTING = False
 if UNIT_TESTING:
@@ -16,16 +12,15 @@ if UNIT_TESTING:
 
 class NodeInfo:
     def __init__(self, logger):
-        config_file = open(CONFIG_FILE_NAME, "r")
-        self.config = json.load(config_file)
-        config_file.close()
-        self.logger = logger
+        # Global config
+        self.config = util.load_config_from_file()
         if UNIT_TESTING:
             if logger:
                 logger.warn("UNIT_TESTING is enabled. Kill process immediately if not in test environment!")
             else:
                 print("UNIT_TESTING is enabled. Kill process immediately if not in test environment!")
         self.rpc_interface = rpc_interface.RPCInterface()
+        self.logger = logger
         self.enode = None
         self.name = None
         self.eth_node_id = None
