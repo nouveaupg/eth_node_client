@@ -1,7 +1,7 @@
 import json
 
 # should probably change this in production to an absolute path
-DEFAULT_CONFIG_PATH = "config.json"
+DEFAULT_CONFIG_PATH = "/root/eth_node_client/config.json"
 
 
 def wei_to_ether(wei):
