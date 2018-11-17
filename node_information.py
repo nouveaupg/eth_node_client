@@ -134,7 +134,7 @@ class NodeInfo:
             self.total_rpc_calls += 1
             if "result" in response_data:
                 gas_price = util.hex_to_dec(response_data["result"])
-                self.gas_price = util.wei_to_ether(gas_price)
+                self.gas_price = gas_price
                 message = "Successful eth_gasPrice IPC call: " + str(response_data["delay"]) + " seconds"
                 if self.logger:
                     self.logger.info(message)
