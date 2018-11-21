@@ -33,8 +33,7 @@ class WardenThread(Thread):
         # add the handlers to the logger
         logger.addHandler(thread_fh)
 
-        logger.info("Warden worker thread (tid:{0}) loaded: {1} second polling interval.".format(self.ident,
-                                                                                                 config_data[
+        logger.info("Warden worker thread (tid:{0}) loaded: {1} second polling interval.".format(self.ident,                                                                       config_data[
                                                                                                      "polling_interval"
                                                                                                  ]))
         node_monitor = node_information.NodeInfo(logger)
@@ -50,9 +49,8 @@ class WardenThread(Thread):
             if output_dict["synchronized"]:
                 output_dict["blocks_behind"] = 0
             else:
-				logger.info("Syncing: {0} blocks behind".format(node_monitor.blocks_behind))
+                logger.info("Syncing: {0} blocks behind".format(node_monitor.blocks_behind))
                 output_dict["blocks_behind"] = node_monitor.blocks_behind
-
             data = json.dumps(output_dict).encode()
             ssl_context = ssl.SSLContext()
             ssl_context.load_default_certs()
@@ -115,13 +113,12 @@ if __name__ == '__main__':
     #     if config_data is none:
     #         fatal_error("could not find config file or download from update.")
     # fh.close()
-
     daemonize = config_data["daemonize"]
 
     warden = WardenThread()
     if daemonize:
-        warden.setDaemon(True)
-        warden.start()
+        warden.setDaemon(True)750adc4d07b3cb2ea2442688f4ed94f7
+        warden.start()  
     else:
         logger.info("Not daemonizing this process, you can change this in the configuration file.")
         warden.run()
