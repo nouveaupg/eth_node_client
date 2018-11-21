@@ -65,7 +65,7 @@ class WardenThread(Thread):
                           method="POST")
             response = urlopen(req, context=ssl_context)
             if response.getcode() == 200:
-                logger.info("Node information updated successfully.")v
+                logger.info("Node information updated successfully.")
             else:
                 logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
             # delay for 5 minutes
