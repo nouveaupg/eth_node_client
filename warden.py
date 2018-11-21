@@ -50,6 +50,7 @@ class WardenThread(Thread):
             if output_dict["synchronized"]:
                 output_dict["blocks_behind"] = 0
             else:
+				logger.info("Syncing: {0} blocks behind".format(node_monitor.blocks_behind))
                 output_dict["blocks_behind"] = node_monitor.blocks_behind
 
             data = json.dumps(output_dict).encode()
@@ -66,7 +67,7 @@ class WardenThread(Thread):
                           method="POST")
             response = urlopen(req, context=ssl_context)
             if response.getcode() == 200:
-                logger.info("Node information updated successfully.")
+                logger.info("Node information updated successfully.")v
             else:
                 logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
             # delay for 5 minutes
