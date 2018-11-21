@@ -117,7 +117,7 @@ if __name__ == '__main__':
 
     warden = WardenThread()
     if daemonize:
-        warden.setDaemon(True)750adc4d07b3cb2ea2442688f4ed94f7
+        warden.setDaemon(True)
         warden.start()  
     else:
         logger.info("Not daemonizing this process, you can change this in the configuration file.")
