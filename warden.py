@@ -1,5 +1,5 @@
 from threading import Thread
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, URLError
 import node_information
 import logging
 import json
@@ -64,15 +64,17 @@ class WardenThread(Thread):
                           headers={'Content-Type': 'application/json',
                                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
                           method="POST")
-            response = urlopen(req, context=ssl_context)
-            if response.getcode() == 200:
-                logger.info("Node information updated successfully.")
-            else:
-                logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
-            # delay for 5 minutes
-            polling_interval = config_data["polling_interval"]
-            logger.info("Resting for {0} seconds".format(polling_interval))
-            time.sleep(polling_interval)
+            try:
+                response = urlopen(req, context=ssl_context)
+                if response.getcode() == 200:
+                    logger.info("Node information updated successfully.")
+                else:
+                    logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
+            except URLError as e:
+                polling_interval = config_data["polling_interval"]
+                logger.error("URL Error: {0}, waiting {1} seconds to retry.".format(e.strerror,polling_interval))
+                time.sleep(polling_interval)
+
             node_monitor.update()
 
 
