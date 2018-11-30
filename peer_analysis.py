@@ -8,11 +8,14 @@ import json
 import os
 import datetime
 import re
+import sys
 
 MYSQL_HOST = "localhost"
 MYSQL_USER = "root"
 MYSQL_PASSWD = ""
 MYSQL_NAME = "peer_analysis"
+
+PROCESS_COUNT = 4
 
 PEER_DATA_FILE_NAME_REGEX = re.compile("^peers_[0-9]{1,}.json$")
 
@@ -68,12 +71,19 @@ class PeerInfoIngest:
             return row[0]
         return None
 
-    def ingest_new_data(self):
+    def ingest_new_data(self, x):
         if self.node_id == -1:
             raise InvalidPeer
         latest_peer_connection = self.get_latest_peer_connection()
         all_files = os.listdir(self.json_file_directory)
-        for each_file in all_files:
+        file_count = len(all_files)
+        portion = file_count / PROCESS_COUNT
+        offset = x * portion
+        limit = offset + portion
+        if limit >= file_count:
+            limit = file_count - 1
+        selected_files = all_files[offset:limit]
+        for each_file in selected_files:
             if PEER_DATA_FILE_NAME_REGEX.match(each_file):
                 timestamp = int(each_file.split("_")[1].split(".")[0])
                 captured = datetime.datetime.fromtimestamp(timestamp)
@@ -82,7 +92,7 @@ class PeerInfoIngest:
                 else:
                     result = self.feed_json_file(each_file)
                     if result > 0:
-                        print("Added {0} peer connections to database.".format(result))
+                        print("Subprocess {0}: Added {1} peer connections to database.".format(os.getpid(), result))
 
     def feed_json_file(self, json_file_name):
         if not PEER_DATA_FILE_NAME_REGEX.match(json_file_name):
@@ -119,7 +129,16 @@ class PeerInfoIngest:
 
 
 if __name__ == "__main__":
-    for each in SERVER_PEER_DATA_DIRECTORIES.keys():
-        node = PeerInfoIngest(each, SERVER_PEER_DATA_DIRECTORIES[each])
-        node.ingest_new_data()
+    if len(sys.argv) == 1:
+        for x in range(0, PROCESS_COUNT):
+            try:
+                pid = os.fork()
+                if pid > 0:
+                    for each in SERVER_PEER_DATA_DIRECTORIES.keys():
+                        node = PeerInfoIngest(each, SERVER_PEER_DATA_DIRECTORIES[each])
+                        node.ingest_new_data(x)
+            except OSError as err:
+                print("Fork #{0} failed: {1}".format(x,err))
+
+
 
