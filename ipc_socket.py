@@ -32,4 +32,4 @@ class GethInterface:
                 _socket = self.setup_socket()
             else:
                 break
-        return json.loads(response_raw)
+        return response_raw
