@@ -17,7 +17,11 @@ class RPCInterface:
                                               sent=time.time()))
         return json.dumps(request_obj)
 
-    def process_response(self, data):
+    def process_response(self, json_data):
+        try:
+            data = json.loads(json_data)
+        except json.JSONDecodeError as err:
+            data = None
         if type(data) == dict and "id" in data:
             output = dict(data)
             ctr = 0
