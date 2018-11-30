@@ -13,66 +13,69 @@ CONSOLE_LOG_LEVEL = logging.INFO
 FILE_LOG_LEVEL = logging.DEBUG
 
 
+def new_file_logger(channel, log_file_path):
+    logger = logging.getLogger(channel)
+    # create file handler which logs even debug messages
+    thread_fh = logging.FileHandler(log_file_path)
+    thread_fh.setLevel(FILE_LOG_LEVEL)
+    # create formatter and add it to the handlers
+    thread_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    thread_fh.setFormatter(thread_formatter)
+    # add the handlers to the logger
+    logger.addHandler(thread_fh)
+
+    return logger
+
+
 def check_for_updates(force):
     return force
 
 
-class WardenThread(Thread):
+def start_update_loop():
+    config_data = util.load_config_from_file()
+    if config_data is None:
+        raise EnvironmentError
+    logger = new_file_logger("warden.worker", config_data["log_file_path"])
+    logger.info("Warden worker process (pid:{0}) started: {1} second polling interval.".format(os.getpid(), config_data[
+        "polling_interval"
+    ]))
+    node_monitor = node_information.NodeInfo(logger)
 
-    def run(self):
-        config_data = util.load_config_from_file()
-        if config_data is None:
-            return
-        logger = logging.getLogger("warden.thread")
-        # create file handler which logs even debug messages
-        thread_fh = logging.FileHandler(config_data["log_file_path"])
-        thread_fh.setLevel(FILE_LOG_LEVEL)
-        # create formatter and add it to the handlers
-        thread_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        thread_fh.setFormatter(thread_formatter)
-        # add the handlers to the logger
-        logger.addHandler(thread_fh)
+    while 1:
+        output_dict = node_monitor.output_request
+        peer_count = len(node_monitor.peers)
+        peer_log_file_name = "peers_{0}.json".format(int(time.time()))
+        peer_log = open(config_data["peer_log_path"] + peer_log_file_name, "w")
+        json.dump(node_monitor.peers, peer_log)
+        peer_log.close()
+        logger.debug("Wrote the {0} current peers to {1}".format(peer_count, peer_log_file_name))
+        if output_dict["synchronized"]:
+            output_dict["blocks_behind"] = 0
+        else:
+            logger.info("Syncing: {0} blocks behind".format(node_monitor.blocks_behind))
+            output_dict["blocks_behind"] = node_monitor.blocks_behind
+        data = json.dumps(output_dict).encode()
+        ssl_context = ssl.SSLContext()
+        ssl_context.load_default_certs()
+        api_endpoint_url = config_data["api_endpoint"] + config_data["api_key"]
 
-        logger.info("Warden worker thread (tid:{0}) loaded: {1} second polling interval.".format(self.ident,                                                                       config_data[
-                                                                                                     "polling_interval"
-                                                                                                 ]))
-        node_monitor = node_information.NodeInfo(logger)
+        logger.debug("Making request to api_endpoint: " + api_endpoint_url)
 
-        while 1:
-            output_dict = node_monitor.output_request
-            peer_count = len(node_monitor.peers)
-            peer_log_file_name = "peers_{0}.json".format(int(time.time()))
-            peer_log = open(config_data["peer_log_path"] + peer_log_file_name, "w")
-            json.dump(node_monitor.peers, peer_log)
-            peer_log.close()
-            logger.debug("Wrote the {0} current peers to {1}".format(peer_count, peer_log_file_name))
-            if output_dict["synchronized"]:
-                output_dict["blocks_behind"] = 0
-            else:
-                logger.info("Syncing: {0} blocks behind".format(node_monitor.blocks_behind))
-                output_dict["blocks_behind"] = node_monitor.blocks_behind
-            data = json.dumps(output_dict).encode()
-            ssl_context = ssl.SSLContext()
-            ssl_context.load_default_certs()
-            api_endpoint_url = config_data["api_endpoint"] + config_data["api_key"]
-
-            logger.debug("Making request to api_endpoint: " + api_endpoint_url)
-
-            req = Request(api_endpoint_url,
-                          data=data,
-                          headers={'Content-Type': 'application/json',
-                                   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
-                          method="POST")
-            response = urlopen(req, context=ssl_context)
-            if response.getcode() == 200:
-                logger.info("Node information updated successfully.")
-            else:
-                logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
-            node_monitor.update()
+        req = Request(api_endpoint_url,
+                      data=data,
+                      headers={'Content-Type': 'application/json',
+                               'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
+                      method="POST")
+        response = urlopen(req, context=ssl_context)
+        if response.getcode() == 200:
+            logger.info("Node information updated successfully.")
+        else:
+            logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
+        node_monitor.update()
 
 
 if __name__ == '__main__':
-    print("Warden v1 started.")
+    print("Warden v2 started.")
     print("Loading configuration from:" + util.DEFAULT_CONFIG_PATH)
     config_data = util.load_config_from_file()
     if config_data is None:
@@ -111,38 +114,25 @@ if __name__ == '__main__':
     # fh.close()
     daemonize = config_data["daemonize"]
 
-    warden = WardenThread()
-    if daemonize:
-        warden.setDaemon(True)
-        warden.start()  
-    else:
+    if not daemonize:
         logger.info("Not daemonizing this process, you can change this in the configuration file.")
-        warden.run()
-
-    if daemonize:
-        # This doesn't currently work
+        start_update_loop()
+    else:
         logger.info("Attempting to daemonize the warden process.")
         try:
             pid = os.fork()
             if pid > 0:
-                # exit the launching process
+                # monitor the child process
+
                 sys.exit(0)
         except OSError as err:
-            logger.fatal('_Fork #1 failed: {0}'.format(err))
+            logger.fatal('_Fork failed: {0}'.format(err))
             sys.exit(1)
         # decouple from parent environment
         os.chdir('/')
         os.setsid()
         os.umask(0)
-        # do second fork
-        try:
-            pid = os.fork()
-            if pid > 0:
-                # exit from second parent
-                sys.exit(0)
-        except OSError as err:
-            logger.info('_Fork #2 failed: {0}'.format(err))
-            sys.exit(1)
+
         # redirect standard file descriptors
         pid = os.getpid()
         logger.info("Launched master process, kill pid: {0} to terminate.".format(pid))
