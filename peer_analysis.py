@@ -3,6 +3,8 @@
 # in raw json format should be used instead and pulled using
 # rsync to a dedicated analysis DB machine
 
+# 11/30/18 multiprocess model added to speed data ingesting NOT TESTED
+
 import MySQLdb
 import json
 import os
@@ -129,6 +131,8 @@ class PeerInfoIngest:
 
 
 if __name__ == "__main__":
+    print("Ethereum Node Peer Analysis Data Ingest Utility Mk2")
+    print("Process Count: {0}".format(PROCESS_COUNT))
     if len(sys.argv) == 1:
         for x in range(0, PROCESS_COUNT):
             try:
@@ -137,8 +141,9 @@ if __name__ == "__main__":
                     for each in SERVER_PEER_DATA_DIRECTORIES.keys():
                         node = PeerInfoIngest(each, SERVER_PEER_DATA_DIRECTORIES[each])
                         node.ingest_new_data(x)
+                else:
+                    print("Forked subprocess #{0}")
             except OSError as err:
-                print("Fork #{0} failed: {1}".format(x,err))
-
-
+                print("Fork #{0} failed: {1}".format(x+1, err))
+                sys.exit(1)
 
