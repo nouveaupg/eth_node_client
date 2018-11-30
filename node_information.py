@@ -52,8 +52,9 @@ class NodeInfo:
                   "gas_price": self.gas_price,
                   "balance": self.balance,
                   "blocks_behind": self.blocks_behind}
-        for each in self.latest_block.keys():
-            output["latest_block_" + each] = self.latest_block[each]
+        if self.latest_block:
+            for each in self.latest_block.keys():
+                output["latest_block_" + each] = self.latest_block[each]
         return output
 
     def _admin_node_info(self):

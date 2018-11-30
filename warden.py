@@ -1,5 +1,5 @@
 from threading import Thread
-from urllib.request import Request, urlopen, URLError
+from urllib.request import Request, urlopen
 import node_information
 import logging
 import json
@@ -33,8 +33,7 @@ class WardenThread(Thread):
         # add the handlers to the logger
         logger.addHandler(thread_fh)
 
-        logger.info("Warden worker thread (tid:{0}) loaded: {1} second polling interval.".format(self.ident,
-                                                                                                 config_data[
+        logger.info("Warden worker thread (tid:{0}) loaded: {1} second polling interval.".format(self.ident,                                                                       config_data[
                                                                                                      "polling_interval"
                                                                                                  ]))
         node_monitor = node_information.NodeInfo(logger)
@@ -50,8 +49,8 @@ class WardenThread(Thread):
             if output_dict["synchronized"]:
                 output_dict["blocks_behind"] = 0
             else:
+                logger.info("Syncing: {0} blocks behind".format(node_monitor.blocks_behind))
                 output_dict["blocks_behind"] = node_monitor.blocks_behind
-
             data = json.dumps(output_dict).encode()
             ssl_context = ssl.SSLContext()
             ssl_context.load_default_certs()
@@ -64,17 +63,11 @@ class WardenThread(Thread):
                           headers={'Content-Type': 'application/json',
                                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
                           method="POST")
-            try:
-                response = urlopen(req, context=ssl_context)
-                if response.getcode() == 200:
-                    logger.info("Node information updated successfully.")
-                else:
-                    logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
-            except URLError as e:
-                polling_interval = config_data["polling_interval"]
-                logger.error("URL Error: {0}, waiting {1} seconds to retry.".format(e.strerror,polling_interval))
-                time.sleep(polling_interval)
-
+            response = urlopen(req, context=ssl_context)
+            if response.getcode() == 200:
+                logger.info("Node information updated successfully.")
+            else:
+                logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
             node_monitor.update()
 
 
@@ -116,13 +109,12 @@ if __name__ == '__main__':
     #     if config_data is none:
     #         fatal_error("could not find config file or download from update.")
     # fh.close()
-
     daemonize = config_data["daemonize"]
 
     warden = WardenThread()
     if daemonize:
         warden.setDaemon(True)
-        warden.start()
+        warden.start()  
     else:
         logger.info("Not daemonizing this process, you can change this in the configuration file.")
         warden.run()
