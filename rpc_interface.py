@@ -18,7 +18,7 @@ class RPCInterface:
         return json.dumps(request_obj)
 
     def process_response(self, json_data):
-        data = json.load(json_data)
+        data = json.loads(json_data)
         if type(data) == dict and "id" in data:
             output = dict(data)
             ctr = 0
