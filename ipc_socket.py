@@ -47,8 +47,4 @@ class GethInterface:
                 _socket = self.setup_socket()
             else:
                 break
-        try:
-            return json.loads(response_raw)
-        except json.JSONDecodeError as err:
-            self.log_error("Geth IPC socket error decoding JSON response: {0}".format(err))
-            return None
+        return response_raw
