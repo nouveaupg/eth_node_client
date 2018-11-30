@@ -88,7 +88,7 @@ class PeerInfoIngest:
         for each_file in selected_files:
             if PEER_DATA_FILE_NAME_REGEX.match(each_file):
                 timestamp = int(each_file.split("_")[1].split(".")[0])
-                captured = datetime.datetime.fromtimestamp(timestamp)
+                captured = datetime.datetime.utcfromtimestamp(timestamp)
                 if latest_peer_connection and captured < latest_peer_connection:
                     continue
                 else:
