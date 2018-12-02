@@ -1,5 +1,4 @@
-from threading import Thread
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, URLError
 import node_information
 import logging
 import json
@@ -66,11 +65,11 @@ def start_update_loop():
                       headers={'Content-Type': 'application/json',
                                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
                       method="POST")
-        response = urlopen(req, context=ssl_context)
-        if response.getcode() == 200:
+        try:
+            response = urlopen(req, context=ssl_context)
             logger.info("Node information updated successfully.")
-        else:
-            logger.error("Error code from API update endpoint: {0}".format(response.getcode()))
+        except URLError as err:
+            logger.error("Error code from API update endpoint: {0}".format(err))
         node_monitor.update()
 
 
@@ -123,8 +122,14 @@ if __name__ == '__main__':
             pid = os.fork()
             if pid > 0:
                 # monitor the child process
-
-                sys.exit(0)
+                while 1:
+                    result = os.waitpid(pid, 0)
+                    if result[1] > 0:
+                        pid = os.fork()
+                        if pid == 0:
+                            break
+                    else:
+                        sys.exit(0)
         except OSError as err:
             logger.fatal('_Fork failed: {0}'.format(err))
             sys.exit(1)
@@ -135,16 +140,16 @@ if __name__ == '__main__':
 
         # redirect standard file descriptors
         pid = os.getpid()
-        logger.info("Launched master process, kill pid: {0} to terminate.".format(pid))
+        logger.info("Launched warden process, kill pid: {0} to terminate.".format(pid))
         pid_file = open("/tmp/warden.pid", "w")
         pid_file.write(str(pid))
         pid_file.close()
         sys.stdout.flush()
         si = open(os.devnull, 'r')
-        so = open(os.devnull, 'w')
-        se = open(os.devnull, 'w')
+        so = open(config_data["log_file_path"], 'w')
+        se = open(config_data["log_file_path"], 'w')
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
-
-        # TODO: spawn watchdog process
+        print("{0} warden - INFO - Daemonized warden.".format(time.asctime()))
+        start_update_loop()
