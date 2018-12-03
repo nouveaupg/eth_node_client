@@ -69,7 +69,10 @@ def start_update_loop():
             response = urlopen(req, context=ssl_context)
             logger.info("Node information updated successfully.")
         except URLError as err:
-            logger.error("Error code from API update endpoint: {0}".format(err))
+            logger.error("Error from Node Update API update endpoint: {0}".format(err))
+            error_delay = config_data['polling_interval']
+            logger.info("Sleeping for {0} seconds".format(error_delay))
+            time.sleep(error_delay)
         node_monitor.update()
 
 
