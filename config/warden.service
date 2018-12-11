@@ -3,8 +3,9 @@ Description=Warden Service
 
 
 [Service]
-Type=simple
-ExecStart=/root/eth_node_client/warden.py
+User=root
+Group=root
+ExecStart=/bin/bash --login -c "/root/eth_node_client/warden.py"
 Restart=always
 StartLimitBurst=3
 StartLimitInterval=60s
