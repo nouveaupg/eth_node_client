@@ -3,7 +3,7 @@ Description=Warden Service
 
 
 [Service]
-Type=forking
+Type=simple
 ExecStart=/root/eth_node_client/warden.py
 Restart=always
 StartLimitBurst=3
