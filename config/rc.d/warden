@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# PROVIDE: warden
+# REQUIRE: geth
+# KEYWORD:
+
+. /etc/rc.subr
+
+name="warden"
+rcvar="warden_enable"
+warden_command="/root/eth_node_client/warden.py"
+pidfile="/var/run/${name}.pid"
+command="/usr/sbin/daemon"
+command_args="-P ${pidfile} -r -f ${warden_command}"
+
+load_rc_config $name
+: ${warden_enable:=no}
+
+run_rc_command "$1"
