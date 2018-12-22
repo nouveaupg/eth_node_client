@@ -53,6 +53,9 @@ def start_update_loop():
         else:
             logger.info("Syncing: {0} blocks behind".format(node_monitor.blocks_behind))
             output_dict["blocks_behind"] = node_monitor.blocks_behind
+            # slow down the warden when the node is unsynchronized to
+            # reduce app server load
+            time.sleep(config_data["polling_interval"])
         data = json.dumps(output_dict).encode()
         ssl_context = ssl.SSLContext()
         ssl_context.load_default_certs()
