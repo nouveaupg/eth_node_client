@@ -1,5 +1,6 @@
 import socket
 import json
+import time
 
 
 class GethInterface:
@@ -39,6 +40,8 @@ class GethInterface:
                     response_raw += _socket.recv(4096).decode()
                 except socket.timeout:
                     self.log_error("Geth IPC socket timeout.")
+                    # wait 2 seconds before hammering the IO system some more
+                    time.sleep(2)
                     break
             if response_raw == "":
                 # retry if we didn't get a response
