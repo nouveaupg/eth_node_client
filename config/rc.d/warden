@@ -8,10 +8,10 @@
 
 name="warden"
 rcvar="warden_enable"
-warden_command="/root/eth_node_client/warden.py"
+warden_command="/home/ethereum/eth_node_client/warden.py"
 pidfile="/var/run/${name}.pid"
 command="/usr/sbin/daemon"
-command_args="-P ${pidfile} -r -f ${warden_command}"
+command_args="-P ${pidfile} -R 10 -o /tmp/warden.log -f ${warden_command}"
 
 load_rc_config $name
 : ${warden_enable:=no}

@@ -18,4 +18,3 @@ load_rc_config $name
 : ${geth_enable:=no}
 
 run_rc_command "$1"
-
