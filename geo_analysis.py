@@ -15,7 +15,7 @@ peer_geo_stats = {}
 for root, dirs, files in os.walk(TARGET_DIR):
     for name in files:
         full_path = os.path.join(root, name)
-        match = numerals.match(name)
+        match = numerals.search(name)
         timestamp = int(name[match.start():match.end()])
         epoch = datetime.datetime.fromtimestamp(timestamp)
         stream = open(full_path, "r")
