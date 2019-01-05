@@ -37,4 +37,25 @@ for root, dirs, files in os.walk(TARGET_DIR):
 
         peer_geo_stats[epoch.isoformat()] = countries
 
-print(peer_geo_stats)
+for key in peer_geo_stats.keys():
+    country_codes = peer_geo_stats[key].keys()
+    for each in all_found_country_codes:
+        if each not in country_codes:
+            peer_geo_stats[key][each] = 0
+
+csv_filepath = TARGET_DIR + "/country_codes.csv"
+csv_file = open(csv_filepath, "w")
+
+index_row = ["Timestamp"]
+index_row.extend(all_found_country_codes)
+
+index_row_str = ",".join(index_row) + "\n"
+csv_file.write(index_row_str)
+
+for key in peer_geo_stats.keys():
+    geo_data = peer_geo_stats[key]
+    data_row = [key]
+    data_row_str = ",".join(geo_data) + "\n"
+    csv_file.write(data_row_str)
+
+csv_file.close()
