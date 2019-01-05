@@ -55,7 +55,9 @@ csv_file.write(index_row_str)
 for key in peer_geo_stats.keys():
     geo_data = peer_geo_stats[key]
     data_row = [key]
-    data_row_str = ",".join(geo_data) + "\n"
+    for each in all_found_country_codes:
+        data_row.append(each)
+    data_row_str = ",".join(data_row) + "\n"
     csv_file.write(data_row_str)
 
 csv_file.close()
