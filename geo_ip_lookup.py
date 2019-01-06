@@ -5,8 +5,8 @@ import sys
 
 MYSQL_HOST = "localhost"
 MYSQL_USER = "root"
-MYSQL_PASS = "beligerent8136"
-MYSQL_DB = "geo_ip"
+MYSQL_PASS = "thistle2832"
+MYSQL_DB = "service"
 
 
 class GeoLocatedIP:
