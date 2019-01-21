@@ -34,17 +34,15 @@ class GethInterface:
         _socket = self.setup_socket()
         _socket.sendall(self.request_data.encode())
         response_raw = ""
-        max_rpc_tries = self.config['max_rpc_tries']
-        for x in range(max_rpc_tries):
-            try:
-                response_raw += _socket.recv(4096).decode()
-            except socket.timeout:
-                remaining_attempts = max_rpc_tries - (x+1)
-                self.log_error("Geth IPC socket timeout. ({0} attempts remaining)".format(remaining_attempts))
-                # wait 2 seconds before hammering the IO system some more
-                time.sleep(2)
-                response_raw = ""
-
+        for _ in range(self.config['max_rpc_tries']):
+            while True:
+                try:
+                    response_raw += _socket.recv(4096).decode()
+                except socket.timeout:
+                    self.log_error("Geth IPC socket timeout.")
+                    # wait 2 seconds before hammering the IO system some more
+                    time.sleep(2)
+                    break
             if response_raw == "":
                 # retry if we didn't get a response
                 self.log_info("Geth IPC socket no response, retrying...")
@@ -53,3 +51,4 @@ class GethInterface:
             else:
                 break
         return response_raw
+
