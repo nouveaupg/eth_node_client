@@ -10,11 +10,26 @@ MYSQL_DB = "service"
 
 
 class GeoLocatedIP:
-    def __init__(self,ip_address,country_code,country_name,continent,eu_member=False):
+    def __init__(self,
+                 ip_address,
+                 country_code,
+                 country_name,
+                 continent,
+                 eu_member=False,
+                 satellite_provider=False,
+                 anonymous_proxy=False):
         self.ip_address = ip_address
         self.country_code = country_code
         self.country_name = country_name
         self.continent = continent
+        if anonymous_proxy > 0:
+            self.anonymous_proxy = True
+        else:
+            self.anonymous_proxy = False
+        if satellite_provider > 0:
+            self.satellite_provider = True
+        else:
+            self.satellite_provider = False
         if eu_member > 0:
             self.eu_member = True
         else:
@@ -50,8 +65,8 @@ class GeoIPDatabase:
 
     def lookup(self, ipv4_address_string):
         parts = ipv4_address_string.split(".")
-        match_exp = parts[0] + "." + parts[1] + ".%"
-        sql = "SELECT network, geoname_id FROM geo_ip_countries WHERE network LIKE %s"
+        match_exp = parts[0] + "." + parts[1]
+        sql = "SELECT network, geoname_id FROM geo_ip_countries WHERE network_class_ab=%s"
         ip_address = ipaddress.IPv4Address(ipv4_address_string)
         start = time.time()
         c = self.db.cursor()

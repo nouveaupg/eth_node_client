@@ -4,7 +4,7 @@ Description=geth
 [Service]
 User=ethereum
 Group=ethereum
-ExecStart=/bin/bash --login -c "/home/ethereum/go-ethereum/build/bin/geth --cache 2048 --metrics --maxpeers 300 --bootnodes enode://67c6c328f017ae30542a57e1a15d824c26a9cdf2a19793695a9118b3c6989336616c03be2c49e5b42349234f040287ff438c4026f1799ddeb160f13dff9a36cd@103.214.110.98:30303,enode://ec2527efe63e38f7c24680e158f93ec8c71d07558f56b74aff883f1bf18df90690ebcc50c2b35576628cc5a963ee740a5b0eaf3a82158eadf98e0859c829839b@81.171.3.78:30303"
+ExecStart=/bin/bash --login -c "/home/ethereum/go-ethereum/build/bin/geth --config /home/ethereum/eth_node_client/config/geth.config"
 Restart=always
 StartLimitBurst=3
 StartLimitInterval=60s
