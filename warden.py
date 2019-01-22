@@ -43,8 +43,6 @@ def start_update_loop():
 
     while 1:
         output_dict = node_monitor.output_request
-        peer_count = len(node_monitor.peers)
-        logger.debug("Wrote the {0} current peers to {1}".format(peer_count, peer_log_file_name))
         if output_dict["synchronized"]:
             output_dict["blocks_behind"] = 0
         else:
