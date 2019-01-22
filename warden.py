@@ -7,6 +7,7 @@ import ssl
 import os
 import sys
 import util
+from subprocess import call
 
 CONSOLE_LOG_LEVEL = logging.INFO
 FILE_LOG_LEVEL = logging.DEBUG
@@ -43,10 +44,6 @@ def start_update_loop():
     while 1:
         output_dict = node_monitor.output_request
         peer_count = len(node_monitor.peers)
-        peer_log_file_name = "peers_{0}.json".format(int(time.time()))
-        peer_log = open(config_data["peer_log_path"] + peer_log_file_name, "w")
-        json.dump(node_monitor.peers, peer_log)
-        peer_log.close()
         logger.debug("Wrote the {0} current peers to {1}".format(peer_count, peer_log_file_name))
         if output_dict["synchronized"]:
             output_dict["blocks_behind"] = 0
@@ -70,6 +67,11 @@ def start_update_loop():
                       method="POST")
         try:
             response = urlopen(req, context=ssl_context)
+            json_data = json.loads(response.read())
+            directed_commands = json_data["directed_commands"]
+            undirected_commands = json_data["undirected_commands"]
+            if undirected_commands > 0:
+                call("python3 /home/ethereum/ERC20Interface/command.py undirected_command", shell=True)
             logger.info("Node information updated successfully.")
         except URLError as err:
             logger.error("Error from Node Update API update endpoint: {0}".format(err))
@@ -80,7 +82,7 @@ def start_update_loop():
 
 
 if __name__ == '__main__':
-    print("Warden v2 started.")
+    print("Warden v3 started.")
     print("Loading configuration from:" + util.DEFAULT_CONFIG_PATH)
     config_data = util.load_config_from_file()
     if config_data is None:
