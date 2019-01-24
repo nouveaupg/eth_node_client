@@ -5,7 +5,6 @@ import json
 import time
 import ssl
 import os
-import sys
 import util
 from subprocess import call
 
@@ -68,9 +67,11 @@ def start_update_loop():
             json_data = json.loads(response.read())
             directed_commands = json_data["directed_commands"]
             undirected_commands = json_data["undirected_commands"]
+            logger.info("Update accepted from Node API. Command queue: {0} undirected, {1} directed".format(
+                undirected_commands,
+                directed_commands))
             if undirected_commands > 0:
                 call("python3 /home/ethereum/ERC20Interface/command.py undirected_command", shell=True)
-            logger.info("Node information updated successfully.")
         except URLError as err:
             logger.error("Error from Node Update API update endpoint: {0}".format(err))
             error_delay = config_data['polling_interval']
@@ -117,45 +118,6 @@ if __name__ == '__main__':
     #     if config_data is none:
     #         fatal_error("could not find config file or download from update.")
     # fh.close()
-    daemonize = config_data["daemonize"]
 
-    if not daemonize:
-        logger.info("Not daemonizing this process, you can change this in the configuration file.")
-        start_update_loop()
-    else:
-        logger.info("Attempting to daemonize the warden process.")
-        try:
-            pid = os.fork()
-            if pid > 0:
-                # monitor the child process
-                while 1:
-                    result = os.waitpid(pid, 0)
-                    if result[1] > 0:
-                        pid = os.fork()
-                        if pid == 0:
-                            break
-                    else:
-                        sys.exit(0)
-        except OSError as err:
-            logger.fatal('_Fork failed: {0}'.format(err))
-            sys.exit(1)
-        # decouple from parent environment
-        os.chdir('/')
-        os.setsid()
-        os.umask(0)
-
-        # redirect standard file descriptors
-        pid = os.getpid()
-        logger.info("Launched warden process, kill pid: {0} to terminate.".format(pid))
-        pid_file = open("/tmp/warden.pid", "w")
-        pid_file.write(str(pid))
-        pid_file.close()
-        sys.stdout.flush()
-        si = open(os.devnull, 'r')
-        so = open(config_data["log_file_path"], 'w')
-        se = open(config_data["log_file_path"], 'w')
-        os.dup2(si.fileno(), sys.stdin.fileno())
-        os.dup2(so.fileno(), sys.stdout.fileno())
-        os.dup2(se.fileno(), sys.stderr.fileno())
-        print("{0} warden - INFO - Daemonized warden.".format(time.asctime()))
-        start_update_loop()
+    logger.info("Warden v3: logging initialized")
+    start_update_loop()
