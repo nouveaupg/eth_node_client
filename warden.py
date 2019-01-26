@@ -4,87 +4,83 @@ import logging
 import json
 import time
 import ssl
-import os
 import util
 from subprocess import call
 
 CONSOLE_LOG_LEVEL = logging.INFO
 FILE_LOG_LEVEL = logging.DEBUG
 
+# WARNING: these get passed to subprocess.call(shell=True)
 
-def new_file_logger(channel, log_file_path):
-    logger = logging.getLogger(channel)
-    # create file handler which logs even debug messages
-    thread_fh = logging.FileHandler(log_file_path)
-    thread_fh.setLevel(FILE_LOG_LEVEL)
-    # create formatter and add it to the handlers
-    thread_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    thread_fh.setFormatter(thread_formatter)
-    # add the handlers to the logger
-    logger.addHandler(thread_fh)
-
-    return logger
+COMMAND_PY_PATH = "/home/ethereum/ERC20Interface/command.py"
+PYTHON_CMD = "/usr/local/bin/python3"
 
 
-def check_for_updates(force):
-    return force
+class Warden:
+    def __init__(self, use_logger=None):
+        self.config = util.load_config_from_file()
+        self.logger = use_logger
+        if self.logger is None:
+            self.logger = logging.getLogger("warden.worker")
+            worker_fh = logging.FileHandler(self.config['log_file_path'])
+            worker_fh.setLevel(FILE_LOG_LEVEL)
+            worker_fh.setFormatter(logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            ))
+            # add the handlers to the logger
+            self.logger = logger.addHandler(worker_fh)
 
+    def start_update_loop(self):
+        self._update_loop()
 
-def start_update_loop():
-    config_data = util.load_config_from_file()
-    if config_data is None:
-        raise EnvironmentError
-    logger = new_file_logger("warden.worker", config_data["log_file_path"])
-    logger.info("Warden worker process (pid:{0}) started: {1} second polling interval.".format(os.getpid(), config_data[
-        "polling_interval"
-    ]))
-    node_monitor = node_information.NodeInfo(logger)
+    def _update_loop(self):
+        node_monitor = node_information.NodeInfo(self.logger)
 
-    while 1:
-        output_dict = node_monitor.output_request
-        if output_dict["synchronized"]:
-            output_dict["blocks_behind"] = 0
-            data = json.dumps(output_dict).encode()
-            ssl_context = ssl.SSLContext()
-            ssl_context.load_default_certs()
-            api_endpoint_url = config_data["api_endpoint"] + config_data["api_key"]
+        while 1:
+            output_dict = node_monitor.output_request
+            if output_dict["synchronized"]:
+                output_dict["blocks_behind"] = 0
+                data = json.dumps(output_dict).encode()
+                ssl_context = ssl.SSLContext()
+                ssl_context.load_default_certs()
+                api_endpoint_url = config_data["api_endpoint"] + config_data["api_key"]
 
-            logger.debug("Making request to api_endpoint: " + api_endpoint_url)
+                logger.debug("Making request to api_endpoint: " + api_endpoint_url)
 
-            req = Request(api_endpoint_url,
-                          data=data,
-                          headers={'Content-Type': 'application/json',
-                                   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
-                          method="POST")
-            try:
-                response = urlopen(req, context=ssl_context)
-                json_data = json.loads(response.read())
-                directed_commands = json_data["directed_commands"]
-                undirected_commands = json_data["undirected_commands"]
-                logger.info("Update accepted from Node API. Command queue: {0} undirected, {1} directed".format(
-                    undirected_commands,
-                    directed_commands))
-                if undirected_commands > 0:
-                    call("python3 /home/ethereum/ERC20Interface/command.py undirected_command", shell=True)
-            except URLError as err:
-                logger.error("Error from Node Update API update endpoint: {0}".format(err))
+                req = Request(api_endpoint_url,
+                              data=data,
+                              headers={'Content-Type': 'application/json',
+                                       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
+                              method="POST")
+                try:
+                    response = urlopen(req, context=ssl_context)
+                    json_data = json.loads(response.read())
+                    directed_commands = json_data["directed_commands"]
+                    undirected_commands = json_data["undirected_commands"]
+                    logger.info("Update accepted from Node API. Command queue: {0} undirected, {1} directed".format(
+                        undirected_commands,
+                        directed_commands))
+                    if undirected_commands > 0:
+                        call("{0} {1} undirected_command".format(PYTHON_CMD, COMMAND_PY_PATH, ), shell=True)
+                except URLError as err:
+                    logger.error("Error from Node Update API update endpoint: {0}".format(err))
+                    error_delay = config_data['polling_interval']
+                    logger.info("Sleeping for {0} seconds".format(error_delay))
+                    time.sleep(error_delay)
+                except KeyError as err:
+                    error_delay = config_data['polling_interval']
+                    logger.info(
+                        "Did not receive commands from Node Update API, sleeping for {0} seconds.".format(error_delay))
+                    time.sleep(error_delay)
+            else:
+                logger.info("Syncing: {0} blocks behind".format(node_monitor.blocks_behind))
+                output_dict["blocks_behind"] = node_monitor.blocks_behind
+                # slow down the warden when the node is unsynchronized to
+                # reduce app server load
                 error_delay = config_data['polling_interval']
                 logger.info("Sleeping for {0} seconds".format(error_delay))
                 time.sleep(error_delay)
-            except KeyError as err:
-                error_delay = config_data['polling_interval']
-                logger.info(
-                    "Did not receive commands from Node Update API, sleeping for {0} seconds.".format(error_delay))
-                time.sleep(error_delay)
-        else:
-            logger.info("Syncing: {0} blocks behind".format(node_monitor.blocks_behind))
-            output_dict["blocks_behind"] = node_monitor.blocks_behind
-            # slow down the warden when the node is unsynchronized to
-            # reduce app server load
-            error_delay = config_data['polling_interval']
-            logger.info("Sleeping for {0} seconds".format(error_delay))
-            time.sleep(error_delay)
-        node_monitor.update()
+            self._update_loop()
 
 
 if __name__ == '__main__':
@@ -111,20 +107,6 @@ if __name__ == '__main__':
     logger.addHandler(fh)
     logger.addHandler(ch)
 
-    # TODO: maybe this would be a use for some sort of git module?
-    #
-    # print("checking server for updates...")
-    # if config_data:
-    #     updated = check_for_updates(false)
-    # else:
-    #     updated = check_for_updates(true)
-    # if updated:
-    #     logger.info("successfully installed update from server.")
-    # else:
-    #     logger.info("update not installed.")
-    #     if config_data is none:
-    #         fatal_error("could not find config file or download from update.")
-    # fh.close()
-
     logger.info("Warden v3: logging initialized")
-    start_update_loop()
+    warden = Warden(use_logger=logger)
+    warden.start_update_loop()
