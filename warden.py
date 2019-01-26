@@ -44,36 +44,43 @@ def start_update_loop():
         output_dict = node_monitor.output_request
         if output_dict["synchronized"]:
             output_dict["blocks_behind"] = 0
+            data = json.dumps(output_dict).encode()
+            ssl_context = ssl.SSLContext()
+            ssl_context.load_default_certs()
+            api_endpoint_url = config_data["api_endpoint"] + config_data["api_key"]
+
+            logger.debug("Making request to api_endpoint: " + api_endpoint_url)
+
+            req = Request(api_endpoint_url,
+                          data=data,
+                          headers={'Content-Type': 'application/json',
+                                   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
+                          method="POST")
+            try:
+                response = urlopen(req, context=ssl_context)
+                json_data = json.loads(response.read())
+                directed_commands = json_data["directed_commands"]
+                undirected_commands = json_data["undirected_commands"]
+                logger.info("Update accepted from Node API. Command queue: {0} undirected, {1} directed".format(
+                    undirected_commands,
+                    directed_commands))
+                if undirected_commands > 0:
+                    call("python3 /home/ethereum/ERC20Interface/command.py undirected_command", shell=True)
+            except URLError as err:
+                logger.error("Error from Node Update API update endpoint: {0}".format(err))
+                error_delay = config_data['polling_interval']
+                logger.info("Sleeping for {0} seconds".format(error_delay))
+                time.sleep(error_delay)
+            except KeyError as err:
+                error_delay = config_data['polling_interval']
+                logger.info(
+                    "Did not receive commands from Node Update API, sleeping for {0} seconds.".format(error_delay))
+                time.sleep(error_delay)
         else:
             logger.info("Syncing: {0} blocks behind".format(node_monitor.blocks_behind))
             output_dict["blocks_behind"] = node_monitor.blocks_behind
             # slow down the warden when the node is unsynchronized to
             # reduce app server load
-            time.sleep(config_data["polling_interval"])
-        data = json.dumps(output_dict).encode()
-        ssl_context = ssl.SSLContext()
-        ssl_context.load_default_certs()
-        api_endpoint_url = config_data["api_endpoint"] + config_data["api_key"]
-
-        logger.debug("Making request to api_endpoint: " + api_endpoint_url)
-
-        req = Request(api_endpoint_url,
-                      data=data,
-                      headers={'Content-Type': 'application/json',
-                               'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'},
-                      method="POST")
-        try:
-            response = urlopen(req, context=ssl_context)
-            json_data = json.loads(response.read())
-            directed_commands = json_data["directed_commands"]
-            undirected_commands = json_data["undirected_commands"]
-            logger.info("Update accepted from Node API. Command queue: {0} undirected, {1} directed".format(
-                undirected_commands,
-                directed_commands))
-            if undirected_commands > 0:
-                call("python3 /home/ethereum/ERC20Interface/command.py undirected_command", shell=True)
-        except URLError as err:
-            logger.error("Error from Node Update API update endpoint: {0}".format(err))
             error_delay = config_data['polling_interval']
             logger.info("Sleeping for {0} seconds".format(error_delay))
             time.sleep(error_delay)
