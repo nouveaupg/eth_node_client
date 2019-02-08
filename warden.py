@@ -60,7 +60,9 @@ class Warden:
                     logger.info("Update accepted from Node API. Command queue: {0} undirected, {1} directed".format(
                         undirected_commands,
                         directed_commands))
-                    if undirected_commands > 0:
+                    if directed_commands > 0:
+                        call("{0} {1} directed_command".format(PYTHON_CMD, COMMAND_PY_PATH, ), shell=True)
+                    elif undirected_commands > 0:
                         call("{0} {1} undirected_command".format(PYTHON_CMD, COMMAND_PY_PATH, ), shell=True)
                 except URLError as err:
                     logger.error("Error from Node Update API update endpoint: {0}".format(err))
